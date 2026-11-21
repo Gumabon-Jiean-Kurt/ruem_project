@@ -53,16 +53,16 @@ resize();
 // ---------- SAVE KEY + GAME LIST ----------
 const KEY = 'miniArcadeSave_v1';
 const GAMES = [
-  { id: 'snake',  name: 'Snake' },
   { id: 'catch',  name: 'Star Catcher' },
   { id: 'target', name: 'Target Rush' },
   { id: 'runner', name: 'Ruins Runner' },
+  { id: 'smash',  name: 'Badminton Smash' },
 ];
 const HINTS = {
-  snake: 'Eat food, avoid walls and yourself. Arrows / WASD.',
   catch: 'Catch stars, dodge bombs. 3 lives. Mouse or arrows.',
   target: 'Click targets for 30 seconds. Misses cost points.',
-  runner: 'Run! A/D or arrows = lane, W/Up/Space = jump, S/Down = slide. Grab coins and power-ups.'
+  runner: 'Run! A/D or arrows = lane, W/Up/Space = jump, S/Down = slide. Grab coins and power-ups.',
+  smash: 'Move with ←/→. Time Space to return; press S for a smash or F for a drop.'
 };
 
 
@@ -81,13 +81,13 @@ function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e
 function getPlayer(name) {
   if (!S.players[name]) {
     S.players[name] = {
-      scores: { snake: 0, catch: 0, target: 0, runner: 0 },
+      scores: { catch: 0, target: 0, runner: 0, smash: 0 },
       coins: 0,
       pet: { name: 'Ruem', hunger: 80, joy: 80, last: Date.now() }
     };
   }
   for (const g of GAMES) if (typeof S.players[name].scores[g.id] !== 'number') S.players[name].scores[g.id] = 0;   // old saves get the new game's slot
-  if (S.players[name].pet && S.players[name].pet.name === 'Blobby') S.players[name].pet.name = 'Ruem';
+  if (S.players[name].pet && S.players[name].pet.name === 'Ruem') S.players[name].pet.name = 'Ruem';
   return S.players[name];
 }
 
@@ -347,13 +347,16 @@ function menuScene() {
       if (S.mode === 'versus') btn(410, 100, 240, 36, 'Player 2: ' + S.p2, () => { setName('p2'); }, 15);
       btn(250, 145, 300, 32, S.mode === 'solo' ? 'Mode: Solo' : 'Mode: Versus (2P, same PC)', () => { S.mode = S.mode === 'solo' ? 'versus' : 'solo'; save(); }, 14);
       GAMES.forEach((g, i) => {
-        const x = i % 2 ? 410 : 150, y = 200 + Math.floor(i / 2) * 75;
-        btn(x, y, 240, 62, g.name + '  (best ' + getPlayer(S.p1).scores[g.id] + ')', () => startGame(g.id), 16);
+        const row = Math.floor(i / 3), rowStart = row * 3;
+        const count = Math.min(3, GAMES.length - rowStart);
+        const x = (W - (count * 220 + (count - 1) * 20)) / 2 + (i - rowStart) * 240;
+        const y = 190 + row * 75;
+        btn(x, y, 220, 58, g.name + '  (best ' + getPlayer(S.p1).scores[g.id] + ')', () => startGame(g.id), 16);
       });
-      btn(150, 355, 150, 34, 'Leaderboard', () => { scene = leaderboardScene(); }, 14);
-      btn(325, 355, 150, 34, 'Export save', exportSave, 14);
-      btn(500, 355, 150, 34, 'Import save', () => document.getElementById('importFile').click(), 14);
-      text('Saves stay on this computer (browser localStorage).', 300, 405, 13, '#889');
+      btn(150, 350, 150, 34, 'Leaderboard', () => { scene = leaderboardScene(); }, 14);
+      btn(325, 350, 150, 34, 'Export save', exportSave, 14);
+      btn(500, 350, 150, 34, 'Import save', () => document.getElementById('importFile').click(), 14);
+      text('Saves stay on this computer (browser localStorage).', 300, 397, 13, '#889');
     }
   };
 }
@@ -432,7 +435,7 @@ function leaderboardScene() {
 function exportSave() {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' }));
-  a.download = 'mini-arcade-save.json'; a.click(); URL.revokeObjectURL(a.href);
+  a.download = 'RuemArcade.json'; a.click(); URL.revokeObjectURL(a.href);
 }
 document.getElementById('importFile').addEventListener('change', e => {
   const f = e.target.files[0]; if (!f) return;
