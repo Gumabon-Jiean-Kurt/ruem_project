@@ -98,6 +98,23 @@ canvas {
   animation: canvasBreath 5s ease-in-out infinite;
 }
 
+canvas[hidden] {
+  display: none !important;
+}
+
+#gameFrame {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+#gameFrame[hidden] {
+  display: none;
+}
+
 /* Soft animated atmospheric glow over the whole arcade */
 body::before {
   content: "";
