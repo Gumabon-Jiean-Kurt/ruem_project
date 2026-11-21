@@ -714,8 +714,6 @@ function menuScene() {
         const width = menuBackground.naturalWidth * scale;
         const height = menuBackground.naturalHeight * scale;
         ctx.drawImage(menuBackground, (W - width) / 2, (H - height) / 2, width, height);
-        ctx.fillStyle = 'rgba(8, 6, 24, .24)';
-        ctx.fillRect(0, 0, W, H);
       }
       btn(150, 100, 240, 36, 'Player 1: ' + S.p1, () => { setName('p1'); }, 15);
       if (S.mode === 'versus') btn(410, 100, 240, 36, 'Player 2: ' + S.p2, () => { setName('p2'); }, 15);
