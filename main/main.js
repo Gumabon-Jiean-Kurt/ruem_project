@@ -76,10 +76,11 @@ function getPlayer(name) {
     S.players[name] = {
       scores: { snake: 0, catch: 0, target: 0, runner: 0 },
       coins: 0,
-      pet: { name: 'Blobby', hunger: 80, joy: 80, last: Date.now() }
+      pet: { name: 'Ruem', hunger: 80, joy: 80, last: Date.now() }
     };
   }
   for (const g of GAMES) if (typeof S.players[name].scores[g.id] !== 'number') S.players[name].scores[g.id] = 0;   // old saves get the new game's slot
+  if (S.players[name].pet && S.players[name].pet.name === 'Blobby') S.players[name].pet.name = 'Ruem';
   return S.players[name];
 }
 
