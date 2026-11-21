@@ -24,6 +24,8 @@ const W = 800, H = 500;
 const cv = document.getElementById('c');
 const ctx = cv.getContext('2d');
 let sc = 1, ox = 0, oy = 0, dpr = 1;
+const menuBackground = new Image();
+menuBackground.src = 'assets/arcade-menu.png';
 
 function resize() {
   dpr = window.devicePixelRatio || 1;
@@ -104,6 +106,29 @@ const keys = {};
 const mouse = { x: W / 2, y: H / 2, active: false };
 let hits = [];
 
+const cursorDot = document.createElement('div');
+const cursorRing = document.createElement('div');
+cursorDot.className = 'cursor-dot';
+cursorRing.className = 'cursor-ring';
+document.body.append(cursorDot, cursorRing);
+cursorDot.hidden = true;
+cursorRing.hidden = true;
+let cursorRingX = innerWidth / 2;
+let cursorRingY = innerHeight / 2;
+let cursorTargetX = cursorRingX;
+let cursorTargetY = cursorRingY;
+const buttonMotion = new Map();
+let pressedButton = null;
+
+function animateCursor() {
+  cursorRingX += (cursorTargetX - cursorRingX) * .38;
+  cursorRingY += (cursorTargetY - cursorRingY) * .38;
+  cursorRing.style.left = cursorRingX + 'px';
+  cursorRing.style.top = cursorRingY + 'px';
+  requestAnimationFrame(animateCursor);
+}
+animateCursor();
+
 
 // ---------- KEY PRESS LISTENERS ----------
 addEventListener('keydown', e => {
@@ -119,26 +144,87 @@ function toLogical(e) {
   const r = cv.getBoundingClientRect();
   return { x: ((e.clientX - r.left) * dpr - ox) / sc, y: ((e.clientY - r.top) * dpr - oy) / sc };
 }
-cv.addEventListener('pointermove', e => { const p = toLogical(e); mouse.x = p.x; mouse.y = p.y; mouse.active = true; });
+cv.addEventListener('pointermove', e => {
+  const p = toLogical(e);
+  mouse.x = p.x; mouse.y = p.y; mouse.active = true;
+  cursorDot.style.left = e.clientX + 'px';
+  cursorDot.style.top = e.clientY + 'px';
+  cursorTargetX = e.clientX;
+  cursorTargetY = e.clientY;
+  const hovering = hits.some(h =>
+    p.x >= h.x && p.x <= h.x + h.w && p.y >= h.y && p.y <= h.y + h.h
+  );
+  cursorDot.classList.toggle('is-hovering', hovering);
+  cursorRing.classList.toggle('is-hovering', hovering);
+});
+cv.addEventListener('pointerenter', () => {
+  cursorDot.hidden = false;
+  cursorRing.hidden = false;
+});
+cv.addEventListener('pointerleave', () => {
+  cursorDot.hidden = true;
+  cursorRing.hidden = true;
+  cursorDot.classList.remove('is-hovering', 'is-clicking');
+  cursorRing.classList.remove('is-hovering', 'is-clicking');
+});
 cv.addEventListener('pointerdown', e => {
   const p = toLogical(e); mouse.x = p.x; mouse.y = p.y;
+  cursorDot.classList.add('is-clicking');
+  cursorRing.classList.add('is-clicking');
   for (let i = hits.length - 1; i >= 0; i--) {          // top-most button first
     const h = hits[i];
-    if (p.x >= h.x && p.x <= h.x + h.w && p.y >= h.y && p.y <= h.y + h.h) { h.fn(); return; }
+    if (p.x >= h.x && p.x <= h.x + h.w && p.y >= h.y && p.y <= h.y + h.h) {
+      pressedButton = h.key;
+      h.fn();
+      setTimeout(() => { pressedButton = null; }, 150);
+      return;
+    }
   }
+  setTimeout(() => { pressedButton = null; }, 150);
   if (scene.click) scene.click(p.x, p.y);
+});
+addEventListener('pointerup', () => {
+  cursorDot.classList.remove('is-clicking');
+  cursorRing.classList.remove('is-clicking');
 });
 
 
 // ---------- BUTTON HELPER (draws a button + registers its click area) ----------
 function btn(x, y, w, h, label, fn, size = 16) {
-  hits.push({ x, y, w, h, fn });
+  const key = `${x}:${y}:${w}:${h}:${label}`;
+  hits.push({ x, y, w, h, fn, key });
   const hover = mouse.x >= x && mouse.x <= x + w && mouse.y >= y && mouse.y <= y + h;
-  ctx.fillStyle = hover ? '#5b6cff' : '#3a46b8';
+  const pressing = pressedButton === key;
+  let scale = buttonMotion.get(key) ?? 1;
+  scale += ((hover ? 1.045 : 1) * (pressing ? .955 : 1) - scale) * .28;
+  buttonMotion.set(key, scale);
+
+  ctx.save();
+  ctx.translate(x + w / 2, y + h / 2);
+  ctx.scale(scale, scale);
+  ctx.translate(-(x + w / 2), -(y + h / 2));
+  ctx.translate(0, hover ? -2 + Math.sin(performance.now() / 140) * 1.25 : 0);
+  ctx.shadowColor = hover ? 'rgba(168,85,247,.72)' : 'rgba(0,0,0,.38)';
+  ctx.shadowBlur = hover ? 18 : 7;
+  ctx.shadowOffsetY = hover ? 8 : 4;
+
+  const gradient = ctx.createLinearGradient(x, y, x, y + h);
+  gradient.addColorStop(0, hover ? '#747fff' : '#505aca');
+  gradient.addColorStop(1, hover ? '#5b21b6' : '#30398f');
+  ctx.fillStyle = gradient;
   rr(x, y, w, h, 8); ctx.fill();
+
+  ctx.shadowColor = 'rgba(255,255,255,.35)';
+  ctx.shadowBlur = hover ? 8 : 0;
+  ctx.strokeStyle = hover ? 'rgba(255,255,255,.48)' : 'rgba(255,255,255,.12)';
+  ctx.lineWidth = 1;
+  rr(x + .5, y + .5, w - 1, h - 1, 8); ctx.stroke();
+
+  ctx.shadowColor = 'transparent';
   ctx.fillStyle = '#fff'; ctx.font = `bold ${size}px sans-serif`;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(label, x + w / 2, y + h / 2);
+  ctx.restore();
 }
 
 // ---------- DRAWING HELPERS (rounded rectangle, text) ----------
@@ -622,7 +708,14 @@ function menuScene() {
   return {
     update() {},
     draw() {
-      text('MINI ARCADE', 400, 55, 44, '#fbbf24');
+      if (menuBackground.complete && menuBackground.naturalWidth > 0) {
+        const scale = Math.max(W / menuBackground.naturalWidth, H / menuBackground.naturalHeight);
+        const width = menuBackground.naturalWidth * scale;
+        const height = menuBackground.naturalHeight * scale;
+        ctx.drawImage(menuBackground, (W - width) / 2, (H - height) / 2, width, height);
+        ctx.fillStyle = 'rgba(8, 6, 24, .24)';
+        ctx.fillRect(0, 0, W, H);
+      }
       btn(150, 100, 240, 36, 'Player 1: ' + S.p1, () => { setName('p1'); }, 15);
       if (S.mode === 'versus') btn(410, 100, 240, 36, 'Player 2: ' + S.p2, () => { setName('p2'); }, 15);
       btn(250, 145, 300, 32, S.mode === 'solo' ? 'Mode: Solo' : 'Mode: Versus (2P, same PC)', () => { S.mode = S.mode === 'solo' ? 'versus' : 'solo'; save(); }, 14);
@@ -810,7 +903,6 @@ function frame(now) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, cv.width, cv.height);       // letterbox bars
   ctx.setTransform(sc, 0, 0, sc, ox, oy);
-  ctx.fillStyle = '#171a33'; ctx.fillRect(0, 0, W, H);                         // game background
   hits = [];
   scene.update(dt); tickPet(dt);
   scene.draw();
