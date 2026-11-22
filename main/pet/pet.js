@@ -190,7 +190,7 @@ document.getElementById('close-button').addEventListener('click', () => {
   if (window.parent !== window) {
     window.parent.postMessage({ type: 'arcade:quit' }, '*');
   } else {
-    window.location.href = '../main.html';
+    window.location.href = '../index.html';
   }
 });
 
