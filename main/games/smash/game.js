@@ -2,6 +2,24 @@ function badmintonGame(finish) {
   const colors = window.RUEM_THEME;
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const randomBetween = (min, max) => min + Math.random() * (max - min);
+  const ruemImage = new Image();
+  let ruemReady = false;
+  if (window.RuemPetModel && typeof window.RuemPetModel.render === 'function') {
+    let equipped = {};
+    try {
+      const saved = JSON.parse(localStorage.getItem('miniArcadeSave_v1') || 'null');
+      const playerName = typeof saved?.p1 === 'string' && saved.p1 ? saved.p1 : 'Player1';
+      equipped = saved?.players?.[playerName]?.pet?.wardrobe?.equipped || {};
+    } catch (error) {
+      console.error('Could not load Ruem’s outfit for Badminton Smash.', error);
+    }
+    ruemImage.onload = () => { ruemReady = true; };
+    ruemImage.onerror = () => console.error('Could not load Ruem’s Badminton Smash model.');
+    ruemImage.src = 'data:image/svg+xml;charset=utf-8,' +
+      encodeURIComponent(window.RuemPetModel.render(equipped, 80));
+  } else {
+    console.error('Ruem’s pet model is not available in Badminton Smash.');
+  }
   let playerX = 0, opponentX = 0;
   let playerPoints = 0, opponentPoints = 0, returns = 0;
   let timeLeft = 60, serveWait = 1, swing = 0, messageTime = 0;
@@ -64,11 +82,14 @@ function badmintonGame(finish) {
     const duration = type === 'smash' ? (highContact ? .62 : .9) : type === 'drop' ? 1.3 : 1.05;
     const apex = type === 'smash' ? 12 : type === 'drop' ? 20 : 62;
     startFlight(flight.z, .04, flight.x, targetX, duration, apex, 'out', type);
+    flight.powerSmash = type === 'smash' && highContact;
     opponentX = targetX;
     returns++;
     swing = 1;
     lastShot = type === 'smash' && !highContact ? 'Smash' : type === 'drop' ? 'Drop' : type === 'smash' ? 'Smash!' : 'Return';
-    message = type === 'smash' && !highContact ? 'Low smash!' : `${lastShot} shot!`;
+    message = type === 'smash'
+      ? highContact ? 'Power smash! Hard to return.' : 'Low smash! Wait for a higher hit.'
+      : `${lastShot} shot!`;
     messageTime = .9;
   }
 
@@ -118,7 +139,7 @@ function badmintonGame(finish) {
       return;
     }
 
-    const returnChance = flight.type === 'smash' ? (flight.apex < 20 ? .48 : .7) :
+    const returnChance = flight.type === 'smash' ? (flight.powerSmash ? .28 : .62) :
       flight.type === 'drop' ? .38 : .78;
     if (Math.random() > returnChance) {
       awardPoint('player');
@@ -141,60 +162,124 @@ function badmintonGame(finish) {
   }
 
   function drawCourt() {
-    const sky = ctx.createLinearGradient(0, 0, 0, 270);
-    sky.addColorStop(0, colors.cotton);
-    sky.addColorStop(1, colors.vanilla);
-    ctx.fillStyle = sky;
+    const arena = ctx.createLinearGradient(0, 0, 0, H);
+    arena.addColorStop(0, '#392746');
+    arena.addColorStop(.42, '#795077');
+    arena.addColorStop(1, '#D88DA8');
+    ctx.fillStyle = arena;
     ctx.fillRect(0, 0, W, H);
 
-    ctx.fillStyle = colors.plum;
-    ctx.fillRect(0, 105, W, 82);
-    for (let i = 0; i < 32; i++) {
-      const x = i * 27 + 6;
-      const height = 12 + (i % 4) * 5;
-      ctx.fillStyle = i % 2 ? colors.bubblegum : colors.cotton;
-      ctx.fillRect(x, 184 - height, 17, height);
-    }
-    for (const x of [105, 250, 550, 695]) {
-      const glow = ctx.createRadialGradient(x, 55, 2, x, 55, 70);
-      glow.addColorStop(0, 'rgba(255,214,110,.48)');
-      glow.addColorStop(1, 'rgba(255,214,110,0)');
+    for (const x of [90, 295, 505, 710]) {
+      const glow = ctx.createRadialGradient(x, 48, 3, x, 95, 155);
+      glow.addColorStop(0, 'rgba(255,230,174,.42)');
+      glow.addColorStop(1, 'rgba(255,230,174,0)');
       ctx.fillStyle = glow;
-      ctx.fillRect(x - 70, 0, 140, 140);
+      ctx.fillRect(x - 155, 0, 310, 235);
     }
 
-    const floor = ctx.createLinearGradient(0, 160, 0, H);
-    floor.addColorStop(0, colors.vanilla);
-    floor.addColorStop(1, colors.cotton);
-    ctx.fillStyle = floor;
+    ctx.strokeStyle = 'rgba(255,245,233,.3)';
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(courtX(-1, 0), courtY(0));
-    ctx.lineTo(courtX(-1, 1), H);
-    ctx.lineTo(courtX(1, 1), H);
-    ctx.lineTo(courtX(1, 0), courtY(0));
-    ctx.closePath();
-    ctx.fill();
+    ctx.moveTo(0, 105);
+    ctx.quadraticCurveTo(W / 2, 54, W, 105);
+    ctx.stroke();
 
+    ctx.fillStyle = 'rgba(45,29,55,.82)';
+    ctx.fillRect(0, 105, W, 88);
+    const audienceColors = [colors.bubblegum, colors.butter, colors.vanilla, '#A8E5D9', colors.red];
+    for (let row = 0; row < 3; row++) {
+      for (let seat = 0; seat < 35; seat++) {
+        const x = 8 + seat * 24 + (row % 2) * 12;
+        const y = 119 + row * 22;
+        const color = audienceColors[(seat * 3 + row * 2) % audienceColors.length];
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x, y, 4 + (seat % 3) * .35, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(255,245,233,.28)';
+        rr(x - 6, y + 4, 12, 10, 5);
+        ctx.fill();
+      }
+    }
+
+    for (let x = 18; x < W; x += 32) {
+      ctx.fillStyle = x % 3 ? colors.butter : colors.vanilla;
+      ctx.beginPath();
+      ctx.arc(x, 198, 2.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    text('STAR CUP  •  BADMINTON ARENA', 400, 91, 12, colors.vanilla);
+
+    const floorBackdrop = ctx.createLinearGradient(0, 190, 0, H);
+    floorBackdrop.addColorStop(0, '#643D69');
+    floorBackdrop.addColorStop(1, '#422B50');
+    ctx.fillStyle = floorBackdrop;
+    ctx.fillRect(0, 200, W, H - 200);
+
+    const courtPath = () => {
+      ctx.beginPath();
+      ctx.moveTo(courtX(-1, 0), courtY(0));
+      ctx.lineTo(courtX(-1, 1), H);
+      ctx.lineTo(courtX(1, 1), H);
+      ctx.lineTo(courtX(1, 0), courtY(0));
+      ctx.closePath();
+    };
+    const floor = ctx.createLinearGradient(220, 165, 590, H);
+    floor.addColorStop(0, '#F5FFF0');
+    floor.addColorStop(.48, '#BDEBE0');
+    floor.addColorStop(1, '#8BD2D2');
+    ctx.save();
+    ctx.shadowColor = 'rgba(255,230,174,.5)';
+    ctx.shadowBlur = 22;
+    courtPath();
+    ctx.fillStyle = floor;
+    ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    courtPath();
+    ctx.clip();
+    ctx.strokeStyle = 'rgba(255,255,255,.2)';
+    ctx.lineWidth = 1;
+    for (let z = .08; z < 1; z += .1) {
+      ctx.beginPath();
+      ctx.moveTo(courtX(-1, z), courtY(z));
+      ctx.lineTo(courtX(1, z), courtY(z));
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    ctx.strokeStyle = 'rgba(255,255,255,.72)';
+    ctx.lineWidth = 5;
+    courtPath();
+    ctx.stroke();
     ctx.strokeStyle = colors.plum;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(courtX(-1, 0), courtY(0)); ctx.lineTo(courtX(-1, 1), H);
     ctx.moveTo(courtX(1, 0), courtY(0)); ctx.lineTo(courtX(1, 1), H);
     ctx.moveTo(courtX(0, 0), courtY(0)); ctx.lineTo(courtX(0, 1), H);
-    for (const z of [.2, .72, 1]) {
+    for (const z of [0, .2, .72, 1]) {
       ctx.moveTo(courtX(-1, z), courtY(z));
       ctx.lineTo(courtX(1, z), courtY(z));
     }
     ctx.stroke();
 
     const netY = courtY(.43), netL = courtX(-1, .43), netR = courtX(1, .43);
+    ctx.strokeStyle = 'rgba(255,255,255,.8)';
+    ctx.lineWidth = 7;
+    ctx.beginPath();
+    ctx.moveTo(netL, netY - 34); ctx.lineTo(netR, netY - 34);
+    ctx.stroke();
     ctx.strokeStyle = colors.plum;
     ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.moveTo(netL, netY - 38); ctx.lineTo(netL, netY + 5);
     ctx.moveTo(netR, netY - 38); ctx.lineTo(netR, netY + 5);
     ctx.moveTo(netL, netY - 34); ctx.lineTo(netR, netY - 34);
+    ctx.closePath();
     ctx.stroke();
+
     ctx.strokeStyle = 'rgba(56,40,63,.58)';
     ctx.lineWidth = 1;
     for (let i = 1; i < 15; i++) {
@@ -210,24 +295,21 @@ function badmintonGame(finish) {
     const x = 400 + opponentX * 62, y = 178;
     ctx.fillStyle = 'rgba(56,40,63,.2)';
     ctx.beginPath(); ctx.ellipse(x, y + 22, 23, 5, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = colors.plum;
-    ctx.lineWidth = 5;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(x - 6, y + 7); ctx.lineTo(x - 9, y + 22);
-    ctx.moveTo(x + 6, y + 7); ctx.lineTo(x + 10, y + 22);
-    ctx.moveTo(x, y - 2); ctx.lineTo(x - 11, y + 9);
-    ctx.moveTo(x, y - 2); ctx.lineTo(x + 11, y + 7);
-    ctx.stroke();
-    ctx.fillStyle = colors.bubblegum;
-    rr(x - 11, y - 14, 22, 25, 7); ctx.fill();
-    ctx.strokeStyle = colors.plum; ctx.lineWidth = 2; ctx.stroke();
-    ctx.fillStyle = colors.vanilla;
-    ctx.beginPath(); ctx.arc(x, y - 21, 8, 0, Math.PI * 2); ctx.fill();
+    if (!ruemReady) return;
+
+    const bob = Math.sin(performance.now() / 240) * 1.2;
+    ctx.drawImage(ruemImage, x - 32, y - 42 + bob, 64, 64);
+    ctx.save();
+    ctx.translate(x + 22, y - 24 + bob);
+    ctx.rotate(-.35);
     ctx.strokeStyle = colors.plum;
     ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.ellipse(x + 18, y + 3, 9, 14, -.45, 0, Math.PI * 2); ctx.stroke();
-    ctx.lineCap = 'butt';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 6, 9, 0, 0, Math.PI * 2);
+    ctx.moveTo(0, 9);
+    ctx.lineTo(3, 25);
+    ctx.stroke();
+    ctx.restore();
   }
 
   function drawShuttle() {
@@ -293,10 +375,14 @@ function badmintonGame(finish) {
       flight.progress >= .74 && flight.progress <= .99 &&
       Math.abs(playerX - flight.x) <= .58;
 
+    ctx.save();
+    ctx.shadowColor = 'rgba(45,29,55,.24)';
+    ctx.shadowBlur = 14;
     ctx.fillStyle = colors.vanilla;
     rr(260, 12, 280, 46, 20); ctx.fill();
+    ctx.restore();
     ctx.strokeStyle = colors.plum; ctx.lineWidth = 2; ctx.stroke();
-    text(`YOU  ${playerPoints}     RIVAL  ${opponentPoints}`, 400, 35, 21, colors.plum);
+    text(`YOU  ${playerPoints}     RUEM  ${opponentPoints}`, 400, 35, 21, colors.plum);
     text(`${Math.ceil(timeLeft)}s`, 750, 30, 18, colors.plum, 'right');
     text('FIRST TO 7 POINTS', 400, 75, 12, colors.plum);
 

@@ -1,3 +1,5 @@
 body {
-  background: radial-gradient(ellipse at 50% 75%, #FFF5E9, #F4D9EE 78%, #DCA6E9);
+  background:
+    radial-gradient(ellipse at 50% 20%, rgba(255, 230, 174, .22), transparent 56%),
+    linear-gradient(180deg, #392746, #795077 48%, #D88DA8);
 }
