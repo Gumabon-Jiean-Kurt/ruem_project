@@ -461,11 +461,37 @@ function menuScene() {
     draw() {
       if (menuBackground.complete && menuBackground.naturalWidth > 0) {
         ctx.save();
+
+        // Reset canvas transform for background rendering
         ctx.setTransform(1, 0, 0, 1, 0, 0);
-        const scale = Math.max(cv.width / menuBackground.naturalWidth, cv.height / menuBackground.naturalHeight);
-        const width = menuBackground.naturalWidth * scale;
-        const height = menuBackground.naturalHeight * scale;
-        ctx.drawImage(menuBackground, (cv.width - width) / 2, (cv.height - height) / 2, width, height);
+
+        // CCTV CAMERA MOVEMENT
+        const time = performance.now() / 1000;
+
+        // Base background scaling
+        const baseScale = Math.max(
+          cv.width / menuBackground.naturalWidth,
+          cv.height / menuBackground.naturalHeight
+        );
+
+        // Gentle zoom movement
+        const zoom = 1.04 + Math.sin(time * 0.35) * 0.015;
+
+        // Slow horizontal and vertical camera movement
+        const panX = Math.sin(time * 0.45) * cv.width * 0.018;
+        const panY = Math.sin(time * 0.30) * cv.height * 0.009;
+
+        // Final background dimensions
+        const width = menuBackground.naturalWidth * baseScale * zoom;
+        const height = menuBackground.naturalHeight * baseScale * zoom;
+
+        // Center the camera movement
+        const x = (cv.width - width) / 2 + panX;
+        const y = (cv.height - height) / 2 + panY;
+
+        // Draw moving arcade background
+        ctx.drawImage(menuBackground, x, y, width, height);
+
         ctx.restore();
       }
       if (isPortraitLayout()) {
