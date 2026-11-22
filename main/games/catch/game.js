@@ -4,6 +4,7 @@
    ##  Catch falling stars, dodge bombs. 3 lives.
    ############################################################ */
 function catchGame(finish) {
+  const colors = window.RUEM_THEME;
   let px = 400, items = [], lives = 3, score = 0, spawn = 0, over = false;
   return {
     update(dt) {
@@ -29,9 +30,14 @@ function catchGame(finish) {
       if (lives <= 0) { over = true; finish(score); }
     },
     draw() {
-      ctx.fillStyle = '#e5e7eb'; rr(px - 50, 470, 100, 14, 6); ctx.fill();
+      ctx.fillStyle = colors.vanilla;
+      rr(250, 8, 300, 36, 18); ctx.fill();
+      ctx.strokeStyle = colors.plum; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = colors.bubblegum; rr(px - 50, 470, 100, 14, 7); ctx.fill();
+      ctx.strokeStyle = colors.plum; ctx.lineWidth = 2; ctx.stroke();
       for (const it of items) text(it.bad ? '💣' : '⭐', it.x, it.y, 26);
-      text('Score: ' + score + '   Lives: ' + '❤'.repeat(Math.max(0, lives)), 400, 25, 20);
+      text('Score: ' + score + '   Lives: ' + '❤'.repeat(Math.max(0, lives)), 400, 26, 20, colors.plum);
+      text('Drag to move', 400, 54, 13, colors.plum);
     }
   };
 }

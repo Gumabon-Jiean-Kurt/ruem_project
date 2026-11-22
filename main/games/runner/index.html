@@ -2,15 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Ruins Runner | Ruem's Arcade</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Sweet Runner | Ruem's Arcade</title>
   <link rel="stylesheet" href="../shared/game-shell.css">
   <link rel="stylesheet" href="game.css">
+  <script src="../../pet/model.js" defer></script>
   <script src="../shared/game-runtime.js" defer></script>
   <script src="game.js" defer></script>
 </head>
 <body>
-  <canvas id="gameCanvas"></canvas>
+  <canvas id="gameCanvas" tabindex="0" aria-label="Sweet Runner. Use LEFT, JUMP, SLIDE, and RIGHT touch controls or the arrow keys."></canvas>
   <button class="quit-button" id="quitButton" type="button">Quit</button>
 </body>
 </html>

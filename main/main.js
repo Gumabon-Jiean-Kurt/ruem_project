@@ -21,6 +21,14 @@
    logical space always fits the window (letterboxed).
    ========================================================= */
 const W = 800, H = 500;
+const PALETTE = Object.freeze({
+  plum: '#38283F',
+  cotton: '#F4D9EE',
+  bubblegum: '#DCA6E9',
+  red: '#E94E70',
+  butter: '#FFD66E',
+  vanilla: '#FFF5E9'
+});
 const cv = document.getElementById('c');
 const ctx = cv.getContext('2d');
 const gameFrame = document.getElementById('gameFrame');
@@ -28,14 +36,45 @@ let sc = 1, ox = 0, oy = 0, dpr = 1;
 const menuBackground = new Image();
 menuBackground.src = 'assets/ruem-arcade.gif';
 
+function isPortraitLayout() {
+  return cv.height > cv.width;
+}
+
+function logicalHeight() {
+  return cv.height / sc;
+}
+
+function mobileUnits(cssPixels) {
+  return cssPixels * dpr / sc;
+}
+
+function mobileTapSize() {
+  return Math.max(88, mobileUnits(44));
+}
+
+function mobileSafeInset(side) {
+  const value = parseFloat(getComputedStyle(document.documentElement)
+    .getPropertyValue(`--safe-area-${side}`)) || 0;
+  return (value + 12) * dpr / sc;
+}
+
+function mobileTopInset() {
+  return Math.max(28, mobileSafeInset('top'));
+}
+
+function mobileBottomInset() {
+  return Math.max(24, mobileSafeInset('bottom'));
+}
+
 function resize() {
   dpr = window.devicePixelRatio || 1;
   const box = cv.getBoundingClientRect();                 // the size the CSS gave the canvas
   cv.width = Math.max(1, Math.floor(box.width * dpr));
   cv.height = Math.max(1, Math.floor(box.height * dpr));
-  sc = Math.min(cv.width / W, cv.height / H);
+  const portrait = cv.height > cv.width;
+  sc = portrait ? cv.width / W : Math.min(cv.width / W, cv.height / H);
   ox = (cv.width - W * sc) / 2;
-  oy = (cv.height - H * sc) / 2;
+  oy = portrait ? 0 : (cv.height - H * sc) / 2;
 }
 addEventListener('resize', resize);
 resize();
@@ -55,14 +94,14 @@ const KEY = 'miniArcadeSave_v1';
 const GAMES = [
   { id: 'catch',  name: 'Star Catcher' },
   { id: 'target', name: 'Target Rush' },
-  { id: 'runner', name: 'Ruins Runner' },
+  { id: 'runner', name: 'Sweet Runner' },
   { id: 'smash',  name: 'Badminton Smash' },
 ];
 const HINTS = {
-  catch: 'Catch stars, dodge bombs. 3 lives. Mouse or arrows.',
-  target: 'Click targets for 30 seconds. Misses cost points.',
-  runner: 'Run! A/D or arrows = lane, W/Up/Space = jump, S/Down = slide. Grab coins and power-ups.',
-  smash: 'Move with ←/→. Time Space to return; press S for a smash or F for a drop.'
+  catch: 'Drag to move, catch stars, and dodge bombs. 3 lives.',
+  target: 'Tap or click targets for 30 seconds. Misses cost points.',
+  runner: 'Use touch controls or arrows to dodge candy and collect boosts.',
+  smash: 'Tap the court to move; tap HIT, SMASH, or DROP to return.'
 };
 
 
@@ -203,11 +242,17 @@ addEventListener('pointerup', () => {
 
 
 // ---------- BUTTON HELPER (draws a button + registers its click area) ----------
-function btn(x, y, w, h, label, fn, size = 16) {
+function btn(x, y, w, h, label, fn, size = 16, variant = 'soft') {
   const key = `${x}:${y}:${w}:${h}:${label}`;
   hits.push({ x, y, w, h, fn, key });
   const hover = mouse.x >= x && mouse.x <= x + w && mouse.y >= y && mouse.y <= y + h;
   const pressing = pressedButton === key;
+  const styles = {
+    soft: [PALETTE.vanilla, PALETTE.cotton, PALETTE.plum],
+    primary: [PALETTE.vanilla, PALETTE.butter, PALETTE.plum],
+    accent: [PALETTE.bubblegum, PALETTE.red, PALETTE.vanilla]
+  };
+  const [top, bottom, labelColor] = styles[variant] || styles.soft;
   let scale = buttonMotion.get(key) ?? 1;
   scale += ((hover ? 1.045 : 1) * (pressing ? .955 : 1) - scale) * .28;
   buttonMotion.set(key, scale);
@@ -217,24 +262,26 @@ function btn(x, y, w, h, label, fn, size = 16) {
   ctx.scale(scale, scale);
   ctx.translate(-(x + w / 2), -(y + h / 2));
   ctx.translate(0, hover ? -2 + Math.sin(performance.now() / 140) * 1.25 : 0);
-  ctx.shadowColor = hover ? 'rgba(168,85,247,.72)' : 'rgba(0,0,0,.38)';
-  ctx.shadowBlur = hover ? 18 : 7;
-  ctx.shadowOffsetY = hover ? 8 : 4;
+  ctx.shadowColor = hover ? 'rgba(233,78,112,.32)' : 'rgba(56,40,63,.22)';
+  ctx.shadowBlur = hover ? 12 : 5;
+  ctx.shadowOffsetY = hover ? 5 : 3;
 
   const gradient = ctx.createLinearGradient(x, y, x, y + h);
-  gradient.addColorStop(0, hover ? '#747fff' : '#505aca');
-  gradient.addColorStop(1, hover ? '#5b21b6' : '#30398f');
+  gradient.addColorStop(0, top);
+  gradient.addColorStop(1, bottom);
   ctx.fillStyle = gradient;
-  rr(x, y, w, h, 8); ctx.fill();
-
-  ctx.shadowColor = 'rgba(255,255,255,.35)';
-  ctx.shadowBlur = hover ? 8 : 0;
-  ctx.strokeStyle = hover ? 'rgba(255,255,255,.48)' : 'rgba(255,255,255,.12)';
-  ctx.lineWidth = 1;
-  rr(x + .5, y + .5, w - 1, h - 1, 8); ctx.stroke();
+  const radius = Math.min(h / 2, 18);
+  rr(x, y, w, h, radius); ctx.fill();
 
   ctx.shadowColor = 'transparent';
-  ctx.fillStyle = '#fff'; ctx.font = `bold ${size}px sans-serif`;
+  ctx.strokeStyle = PALETTE.plum;
+  ctx.lineWidth = 2;
+  rr(x + 1, y + 1, w - 2, h - 2, radius); ctx.stroke();
+
+  ctx.fillStyle = 'rgba(255,245,233,.55)';
+  rr(x + 6, y + 3, w - 12, Math.max(3, h * .2), Math.min(7, h * .12)); ctx.fill();
+
+  ctx.fillStyle = labelColor; ctx.font = `bold ${size}px sans-serif`;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(label, x + w / 2, y + h / 2);
   ctx.restore();
@@ -246,7 +293,7 @@ function rr(x, y, w, h, r) {
   ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
   ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
 }
-function text(str, x, y, size = 18, color = '#fff', align = 'center') {
+function text(str, x, y, size = 18, color = PALETTE.plum, align = 'center') {
   ctx.fillStyle = color; ctx.font = `${size}px sans-serif`;
   ctx.textAlign = align; ctx.textBaseline = 'middle'; ctx.fillText(str, x, y);
 }
@@ -350,31 +397,120 @@ addEventListener('message', e => {
    ##  SCENE: MAIN MENU
    ##  Player names, mode switch, game buttons, leaderboard, export/import.
    ############################################################ */
+function mobileMenuLayout() {
+  const tapSize = mobileTapSize();
+  const fontSize = Math.max(18, mobileUnits(16));
+  const height = logicalHeight();
+  const bannerHeight = Math.max(58, mobileUnits(42));
+  let y = mobileTopInset() + bannerHeight + mobileUnits(10);
+  const player1Y = y;
+  y += tapSize + mobileUnits(12);
+  const player2Y = S.mode === 'versus' ? y : null;
+  if (player2Y !== null) y += tapSize + mobileUnits(12);
+  const modeY = y;
+  y += tapSize + mobileUnits(26);
+  const gameHeadingY = y + 10;
+  const gamesY = y + 38;
+  const gameGap = mobileUnits(12);
+  const secondGameY = gamesY + tapSize + gameGap;
+  const gamesBottom = secondGameY + tapSize;
+  const actionGap = mobileUnits(14);
+  const actionRowsHeight = 2 * tapSize + actionGap;
+  const candidatePetHeight = height >= 1350 ? Math.max(160, tapSize + mobileUnits(24)) : 0;
+  const candidatePetY = gamesBottom + mobileUnits(22);
+  const candidateActionsY = candidatePetY + candidatePetHeight + mobileUnits(22);
+  const petHeight = candidateActionsY + actionRowsHeight <= height - mobileBottomInset()
+    ? candidatePetHeight
+    : 0;
+  const petY = petHeight ? candidatePetY : 0;
+  const desiredActionsY = petHeight ? candidateActionsY : gamesBottom + mobileUnits(22);
+  const actionsY = Math.min(desiredActionsY, height - mobileBottomInset() - actionRowsHeight);
+  return {
+    tapSize, fontSize, bannerHeight, bannerY: mobileTopInset(), player1Y,
+    player2Y, modeY, gameHeadingY, gamesY, secondGameY, petHeight, petY, actionsY, actionGap
+  };
+}
+
+function drawArcadeBanner(x, y, width, height, fontSize) {
+  ctx.save();
+  ctx.shadowColor = 'rgba(56,40,63,.24)';
+  ctx.shadowBlur = 12;
+  const fill = ctx.createLinearGradient(x, y, x + width, y + height);
+  fill.addColorStop(0, PALETTE.vanilla);
+  fill.addColorStop(1, PALETTE.bubblegum);
+  ctx.fillStyle = fill;
+  rr(x, y, width, height, Math.min(20, height / 2));
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = PALETTE.plum;
+  ctx.lineWidth = 2;
+  rr(x + 1, y + 1, width - 2, height - 2, Math.min(19, height / 2));
+  ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle = PALETTE.red;
+  ctx.font = `${fontSize}px "Chewy", cursive`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText("Ruem's Arcade", x + width / 2, y + height / 2);
+}
+
 function menuScene() {
   return {
+    mobilePet: true,
     update() {},
     draw() {
       if (menuBackground.complete && menuBackground.naturalWidth > 0) {
-        const scale = Math.max(W / menuBackground.naturalWidth, H / menuBackground.naturalHeight);
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        const scale = Math.max(cv.width / menuBackground.naturalWidth, cv.height / menuBackground.naturalHeight);
         const width = menuBackground.naturalWidth * scale;
         const height = menuBackground.naturalHeight * scale;
-        ctx.drawImage(menuBackground, (W - width) / 2, (H - height) / 2, width, height);
+        ctx.drawImage(menuBackground, (cv.width - width) / 2, (cv.height - height) / 2, width, height);
+        ctx.restore();
       }
+      if (isPortraitLayout()) {
+        const layout = mobileMenuLayout();
+        const { tapSize, fontSize, actionsY, actionGap } = layout;
+        drawArcadeBanner(30, layout.bannerY, 740, layout.bannerHeight,
+          Math.max(26, mobileUnits(24)));
+        btn(30, layout.player1Y, 740, tapSize, 'Player 1: ' + S.p1, () => { setName('p1'); }, fontSize);
+        if (layout.player2Y !== null) {
+          btn(30, layout.player2Y, 740, tapSize, 'Player 2: ' + S.p2, () => { setName('p2'); }, fontSize);
+        }
+        btn(30, layout.modeY, 740, tapSize, S.mode === 'solo' ? 'Mode: Solo' : 'Mode: Versus', () => {
+          S.mode = S.mode === 'solo' ? 'versus' : 'solo';
+          save();
+        }, fontSize);
+        text('Choose a game', 400, layout.gameHeadingY,
+          Math.max(22, mobileUnits(20)), PALETTE.plum);
+        GAMES.forEach((g, i) => {
+          const x = i % 2 === 0 ? 30 : 415;
+          const y = i < 2 ? layout.gamesY : layout.secondGameY;
+          btn(x, y, 355, tapSize, g.name, () => startGame(g.id), fontSize, 'primary');
+        });
+        const actionWidth = 355;
+        btn(30, actionsY, actionWidth, tapSize, "Ruem's Closet", launchPetCatalog, fontSize, 'accent');
+        btn(415, actionsY, actionWidth, tapSize, 'Leaderboard', () => { scene = leaderboardScene(); }, fontSize);
+        btn(30, actionsY + tapSize + actionGap, actionWidth, tapSize, 'Export save', exportSave, fontSize);
+        btn(415, actionsY + tapSize + actionGap, actionWidth, tapSize, 'Import save', () => {
+          document.getElementById('importFile').click();
+        }, fontSize);
+        return;
+      }
+      drawArcadeBanner(250, 20, 300, 48, 28);
       btn(150, 100, 240, 36, 'Player 1: ' + S.p1, () => { setName('p1'); }, 15);
       if (S.mode === 'versus') btn(410, 100, 240, 36, 'Player 2: ' + S.p2, () => { setName('p2'); }, 15);
       btn(250, 145, 300, 32, S.mode === 'solo' ? 'Mode: Solo' : 'Mode: Versus (2P, same PC)', () => { S.mode = S.mode === 'solo' ? 'versus' : 'solo'; save(); }, 14);
       GAMES.forEach((g, i) => {
-        const row = Math.floor(i / 3), rowStart = row * 3;
-        const count = Math.min(3, GAMES.length - rowStart);
-        const x = (W - (count * 220 + (count - 1) * 20)) / 2 + (i - rowStart) * 240;
+        const row = Math.floor(i / 2), column = i % 2;
+        const x = 170 + column * 240;
         const y = 190 + row * 75;
-        btn(x, y, 220, 58, g.name + '  (best ' + getPlayer(S.p1).scores[g.id] + ')', () => startGame(g.id), 16);
+        btn(x, y, 220, 58, g.name + '  (best ' + getPlayer(S.p1).scores[g.id] + ')', () => startGame(g.id), 16, 'primary');
       });
-      btn(40, 350, 160, 34, "Ruem's Closet", launchPetCatalog, 14);
+      btn(40, 350, 160, 34, "Ruem's Closet", launchPetCatalog, 14, 'accent');
       btn(220, 350, 160, 34, 'Leaderboard', () => { scene = leaderboardScene(); }, 14);
       btn(400, 350, 160, 34, 'Export save', exportSave, 14);
       btn(580, 350, 160, 34, 'Import save', () => document.getElementById('importFile').click(), 14);
-      text('Saves stay on this computer (browser localStorage).', 300, 397, 13, '#889');
     }
   };
 }
@@ -395,12 +531,29 @@ function readyScene(who) {
   return {
     update() {}, draw() {
       const g = GAMES.find(x => x.id === currentGame);
-      text(g.name, 400, 130, 40, '#fbbf24');
-      text(HINTS[currentGame], 400, 190, 18);
+      if (isPortraitLayout()) {
+        const mid = logicalHeight() / 2;
+        const size = Math.max(20, mobileUnits(18));
+        const hints = {
+          catch: 'Drag to move the catcher.',
+          target: 'Tap targets to score.',
+          runner: 'Tap LEFT, RIGHT, JUMP, or SLIDE.',
+          smash: 'Tap to move; tap a shot.'
+        };
+        text(g.name, 400, mid - 112, Math.max(32, mobileUnits(30)), PALETTE.red);
+        text(hints[currentGame], 400, mid - 38, size, PALETTE.plum);
+        text('Get ready, ' + who + '!', 400, mid + 20, size + 4);
+        btn(70, mid + 78, 660, mobileTapSize(), 'Start', () => {
+          launchEmbeddedGame(who);
+        }, Math.max(24, mobileUnits(20)), 'primary');
+        return;
+      }
+      text(g.name, 400, 130, 40, PALETTE.red);
+      text(HINTS[currentGame], 400, 190, 18, PALETTE.plum);
       text('Get ready, ' + who + '!', 400, 250, 26);
       btn(300, 300, 200, 50, 'Start', () => {
         launchEmbeddedGame(who);
-      }, 20);
+      }, 20, 'primary');
     }
   };
 }
@@ -413,13 +566,30 @@ function readyScene(who) {
 function resultsScene() {
   return {
     update() {}, draw() {
-      text('Results - ' + GAMES.find(x => x.id === currentGame).name, 400, 90, 32, '#fbbf24');
+      if (isPortraitLayout()) {
+        const mid = logicalHeight() / 2;
+        const size = Math.max(22, mobileUnits(18));
+        text('Results - ' + GAMES.find(x => x.id === currentGame).name, 400, mid - 180,
+          Math.max(28, mobileUnits(26)), PALETTE.red);
+        results.forEach((r, i) => text(r.name + ': ' + r.score, 400, mid - 95 + i * 54, size));
+        if (results.length === 2) {
+          const [a, b] = results;
+          text(a.score === b.score ? "It's a tie!" : (a.score > b.score ? a.name : b.name) + ' wins!',
+            400, mid + 28, size + 2, PALETTE.red);
+        }
+        btn(30, mid + 90, 355, mobileTapSize(), 'Play again', () => startGame(currentGame),
+          Math.max(20, mobileUnits(16)), 'primary');
+        btn(415, mid + 90, 355, mobileTapSize(), 'Menu', () => { scene = menuScene(); },
+          Math.max(20, mobileUnits(16)));
+        return;
+      }
+      text('Results - ' + GAMES.find(x => x.id === currentGame).name, 400, 90, 32, PALETTE.red);
       results.forEach((r, i) => text(r.name + ': ' + r.score, 400, 160 + i * 40, 26));
       if (results.length === 2) {
         const [a, b] = results;
-        text(a.score === b.score ? "It's a tie!" : (a.score > b.score ? a.name : b.name) + ' wins!', 400, 270, 30, '#4ade80');
+        text(a.score === b.score ? "It's a tie!" : (a.score > b.score ? a.name : b.name) + ' wins!', 400, 270, 30, PALETTE.red);
       }
-      btn(240, 340, 150, 44, 'Play again', () => startGame(currentGame), 16);
+      btn(240, 340, 150, 44, 'Play again', () => startGame(currentGame), 16, 'primary');
       btn(410, 340, 150, 44, 'Menu', () => { scene = menuScene(); }, 16);
     }
   };
@@ -433,11 +603,25 @@ function resultsScene() {
 function leaderboardScene() {
   return {
     update() {}, draw() {
-      text('Leaderboard (best scores)', 400, 40, 28, '#fbbf24');
-      text('Player', 110, 85, 15, '#aab', 'left');
-      GAMES.forEach((g, i) => text(g.name, 300 + i * 110, 85, 15, '#aab'));
+      if (isPortraitLayout()) {
+        const size = Math.max(18, mobileUnits(14));
+        text('Leaderboard', 400, 55, Math.max(26, mobileUnits(22)), PALETTE.red);
+        text('Player', 40, 115, size, PALETTE.plum, 'left');
+        GAMES.forEach((g, i) => text(g.name, 250 + i * 135, 115, Math.max(14, mobileUnits(12)), PALETTE.plum));
+        Object.keys(S.players).slice(0, 10).forEach((n, r) => {
+          const y = 160 + r * 42;
+          text(n, 40, y, size, PALETTE.plum, 'left');
+          GAMES.forEach((g, i) => text(String(S.players[n].scores[g.id] ?? 0), 250 + i * 135, y, size));
+        });
+        btn(70, logicalHeight() - mobileBottomInset() - mobileTapSize(), 660, mobileTapSize(), 'Back',
+          () => { scene = menuScene(); }, Math.max(20, mobileUnits(16)));
+        return;
+      }
+      text('Leaderboard (best scores)', 400, 40, 28, PALETTE.red);
+      text('Player', 110, 85, 15, PALETTE.plum, 'left');
+      GAMES.forEach((g, i) => text(g.name, 300 + i * 110, 85, 15, PALETTE.plum));
       Object.keys(S.players).slice(0, 10).forEach((n, r) => {
-        text(n, 110, 115 + r * 26, 16, '#fff', 'left');
+        text(n, 110, 115 + r * 26, 16, PALETTE.plum, 'left');
         GAMES.forEach((g, i) => text(String(S.players[n].scores[g.id] ?? 0), 300 + i * 110, 115 + r * 26, 16));
       });
       btn(10, 10, 70, 28, 'Back', () => { scene = menuScene(); }, 13);
@@ -520,17 +704,21 @@ function updatePetModel(p) {
 
 function drawPet() {
   const p = pet(), pl = getPlayer(S.p1), mood = (p.hunger + p.joy) / 2;
-  const px = 680, py = 462 - Math.sin(petT * 3) * 3 - Math.sin(hop * Math.PI) * 18;
   updatePetModel(p);
+  if (isPortraitLayout()) {
+    if (scene.mobilePet) drawMobilePet(p, pl, mood);
+    return;
+  }
+  const px = 680, py = 250 - Math.sin(petT * 3) * 3 - Math.sin(hop * Math.PI) * 18;
   ctx.save();
-  ctx.shadowColor = 'rgba(168,85,247,.4)'; ctx.shadowBlur = 14;
-  const panel = ctx.createLinearGradient(640, 410, 800, 500);
-  panel.addColorStop(0, 'rgba(37,24,76,.94)'); panel.addColorStop(1, 'rgba(10,12,35,.94)');
-  ctx.fillStyle = panel; rr(640, 410, 160, 90, 10); ctx.fill();
-  ctx.shadowBlur = 0; ctx.strokeStyle = 'rgba(192,132,252,.42)'; ctx.lineWidth = 1;
-  rr(640.5, 410.5, 159, 89, 10); ctx.stroke();
+  ctx.shadowColor = 'rgba(220,166,233,.32)'; ctx.shadowBlur = 12;
+  const panel = ctx.createLinearGradient(640, 170, 800, 330);
+  panel.addColorStop(0, PALETTE.vanilla); panel.addColorStop(1, PALETTE.cotton);
+  ctx.fillStyle = panel; rr(640, 170, 160, 160, 16); ctx.fill();
+  ctx.shadowBlur = 0; ctx.strokeStyle = PALETTE.plum; ctx.lineWidth = 2;
+  rr(641, 171, 158, 158, 16); ctx.stroke();
   ctx.restore();
-  hits.push({ x: 646, y: 428, w: 68, h: 68, fn: () => { p.joy = Math.min(100, p.joy + 8); hop = 1; } });  // click pet
+  hits.push({ x: 646, y: 214, w: 68, h: 68, fn: () => { p.joy = Math.min(100, p.joy + 8); hop = 1; } });
   if (petModelReady) ctx.drawImage(petModelImage, px - 35, py - 38, 70, 76);
   else {
     ctx.save();
@@ -540,19 +728,68 @@ function drawPet() {
     ctx.fillText('🐶', px, py);
     ctx.restore();
   }
-  text(p.name, 680, 420, 12, '#fff');
-  bar(718, 424, p.hunger, '#f97316', 'Food'); bar(718, 442, p.joy, '#38bdf8', 'Joy');
-  btn(718, 462, 74, 22, 'Feed 5c', () => {
+  text(p.name, 680, 188, 12, PALETTE.plum);
+  bar(718, 202, p.hunger, PALETTE.red, 'Food'); bar(718, 228, p.joy, PALETTE.butter, 'Joy');
+  btn(718, 258, 74, 22, 'Feed 5c', () => {
     if (pl.coins >= 5) { pl.coins -= 5; p.hunger = Math.min(100, p.hunger + 25); p.joy = Math.min(100, p.joy + 3); hop = 1; save(); }
-  }, 12);
-  text('Coins: ' + pl.coins, 756, 492, 11, '#fbbf24');
+  }, 12, 'primary');
+  text('Coins: ' + pl.coins, 756, 300, 11, PALETTE.plum);
+}
+
+function drawMobilePet(p, pl, mood) {
+  const layout = mobileMenuLayout();
+  if (!layout.petHeight) return;
+  const x = 30, y = layout.petY, panelHeight = layout.petHeight;
+  ctx.save();
+  ctx.shadowColor = 'rgba(220,166,233,.32)'; ctx.shadowBlur = 12;
+  const panel = ctx.createLinearGradient(x, y, x + 740, y + panelHeight);
+  panel.addColorStop(0, PALETTE.vanilla); panel.addColorStop(1, PALETTE.cotton);
+  ctx.fillStyle = panel; rr(x, y, 740, panelHeight, 22); ctx.fill();
+  ctx.shadowBlur = 0; ctx.strokeStyle = PALETTE.plum; ctx.lineWidth = 3;
+  rr(x + 1.5, y + 1.5, 737, panelHeight - 3, 21); ctx.stroke();
+  ctx.restore();
+
+  hits.push({ x: x + 16, y: y + 8, w: 132, h: panelHeight - 16,
+    fn: () => { p.joy = Math.min(100, p.joy + 8); hop = 1; } });
+  const petSize = Math.min(132, panelHeight - 24);
+  if (petModelReady) ctx.drawImage(petModelImage, x + 20, y + (panelHeight - petSize) / 2, petSize, petSize);
+  else {
+    ctx.save();
+    ctx.font = `${Math.max(28, mobileUnits(48))}px "Segoe UI Emoji", sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.shadowColor = `hsla(${mood * 1.2},70%,60%,.7)`; ctx.shadowBlur = 15;
+    ctx.fillText('🐶', x + 20 + petSize / 2, y + panelHeight / 2);
+    ctx.restore();
+  }
+
+  const fontSize = Math.max(20, mobileUnits(14));
+  text(p.name, x + 175, y + 28, fontSize, PALETTE.plum, 'left');
+  const drawMobileBar = (top, value, color, label) => {
+    text(`${label} ${Math.round(value)}%`, x + 175, top, fontSize - 4, PALETTE.plum, 'left');
+    ctx.fillStyle = PALETTE.bubblegum;
+    rr(x + 175, top + 8, 225, 12, 6); ctx.fill();
+    ctx.fillStyle = color;
+    rr(x + 175, top + 8, 225 * value / 100, 12, 6); ctx.fill();
+  };
+  drawMobileBar(y + 64, p.hunger, PALETTE.red, 'Food');
+  drawMobileBar(y + 108, p.joy, PALETTE.butter, 'Joy');
+  btn(x + 520, y + 24, 200, layout.tapSize, 'Feed 5c', () => {
+    if (pl.coins >= 5) {
+      pl.coins -= 5;
+      p.hunger = Math.min(100, p.hunger + 25);
+      p.joy = Math.min(100, p.joy + 3);
+      hop = 1;
+      save();
+    }
+  }, layout.fontSize, 'primary');
+  text('Coins: ' + pl.coins, x + 620, y + panelHeight - 12, fontSize - 4, PALETTE.plum);
 }
 
 // ---------- PET: STAT BAR HELPER ----------
 function bar(x, y, v, color, label) {
-  ctx.fillStyle = '#333'; ctx.fillRect(x, y, 74, 8);
+  ctx.fillStyle = PALETTE.bubblegum; ctx.fillRect(x, y, 74, 8);
   ctx.fillStyle = color; ctx.fillRect(x, y, 74 * v / 100, 8);
-  text(label, x + 37, y + 14, 9, '#ccc');
+  text(label, x + 37, y + 14, 9, PALETTE.plum);
 }
 
 //#endregion

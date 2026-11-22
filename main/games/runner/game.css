@@ -1,3 +1,5 @@
 body {
-  background: radial-gradient(ellipse at 50% 80%, #264d36, #0d1b20 74%);
+  background:
+    url("../../assets/sweet-runner-bg.jpg") center / cover no-repeat fixed,
+    linear-gradient(145deg, #F4D9EE, #FFF5E9 55%, #84C8E8);
 }

@@ -1,38 +1,54 @@
+@font-face {
+  font-family: "Chewy";
+  src: url("assets/fonts/Chewy-Regular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
 /* =========================================================
    MINI ARCADE — AESTHETIC UI THEME
-   Palette: yellow • green • purple • pink • black • white • blue
+   Palette: Plum Brown • Cotton Candy • Bubblegum Purple • Ruem Red
+            • Butter Yellow • Vanilla Cream
 
    NOTE:
    Your current HTML draws the arcade interface INSIDE <canvas>.
-   CSS can style the page/canvas itself, but it cannot directly
-   style text/buttons that are drawn with CanvasRenderingContext2D.
-   This file adds the surrounding visual polish, cursor effects,
-   animated canvas glow, and responsive presentation.
+   Canvas-drawn controls are themed in main.js. This file styles
+   the page, optional HTML components, cursor effects, and canvas glow.
    ========================================================= */
 
 :root {
-  --black: #05050a;
-  --black-soft: #0b0b14;
-  --white: #ffffff;
-  --yellow: #ffd43b;
-  --yellow-soft: #fff3a6;
-  --green: #4ade80;
-  --green-soft: #a7f3d0;
-  --purple: #a855f7;
-  --purple-dark: #5b21b6;
-  --pink: #ff4fa3;
-  --pink-soft: #ff9ed1;
-  --blue: #38bdf8;
-  --blue-deep: #2563eb;
+  --plum-brown: #38283F;
+  --cotton-candy: #F4D9EE;
+  --bubblegum-purple: #DCA6E9;
+  --ruem-red: #E94E70;
+  --butter-yellow: #FFD66E;
+  --vanilla-cream: #FFF5E9;
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
 
-  --glow-yellow: 0 0 18px rgba(255, 212, 59, .55),
-                 0 0 42px rgba(255, 212, 59, .18);
-  --glow-purple: 0 0 18px rgba(168, 85, 247, .55),
-                 0 0 42px rgba(168, 85, 247, .20);
-  --glow-pink: 0 0 18px rgba(255, 79, 163, .55),
-               0 0 42px rgba(255, 79, 163, .18);
-  --glow-blue: 0 0 18px rgba(56, 189, 248, .55),
-               0 0 42px rgba(56, 189, 248, .18);
+  --black: var(--plum-brown);
+  --black-soft: var(--cotton-candy);
+  --white: var(--vanilla-cream);
+  --yellow: var(--butter-yellow);
+  --yellow-soft: var(--butter-yellow);
+  --green: var(--bubblegum-purple);
+  --green-soft: var(--cotton-candy);
+  --purple: var(--bubblegum-purple);
+  --purple-dark: var(--plum-brown);
+  --pink: var(--ruem-red);
+  --pink-soft: var(--cotton-candy);
+  --blue: var(--bubblegum-purple);
+  --blue-deep: var(--plum-brown);
+
+  --glow-yellow: 0 0 18px rgba(255, 214, 110, .48),
+                 0 0 42px rgba(255, 214, 110, .18);
+  --glow-purple: 0 0 18px rgba(220, 166, 233, .48),
+                 0 0 42px rgba(220, 166, 233, .20);
+  --glow-pink: 0 0 18px rgba(233, 78, 112, .48),
+               0 0 42px rgba(233, 78, 112, .18);
+  --glow-blue: 0 0 18px rgba(220, 166, 233, .42),
+               0 0 42px rgba(220, 166, 233, .16);
 }
 
 /* ---------- PAGE ---------- */
@@ -47,26 +63,26 @@ body {
   background:
     linear-gradient(
       135deg,
-      rgba(255, 255, 255, .018) 0,
+      rgba(255, 245, 233, .34) 0,
       transparent 32%
     ),
     radial-gradient(
       ellipse at 50% 115%,
-      rgba(56, 189, 248, .14) 0,
+      rgba(220, 166, 233, .28) 0,
       transparent 34%
     ),
     radial-gradient(circle at 18% 20%,
-      rgba(168, 85, 247, .18) 0,
+      rgba(233, 78, 112, .14) 0,
       transparent 28%),
     radial-gradient(circle at 82% 18%,
-      rgba(255, 79, 163, .15) 0,
+      rgba(255, 214, 110, .22) 0,
       transparent 27%),
     radial-gradient(circle at 50% 90%,
-      rgba(56, 189, 248, .12) 0,
+      rgba(220, 166, 233, .24) 0,
       transparent 35%),
-    linear-gradient(145deg, #090711 0%, #05050a 48%, #07101b 100%);
+    linear-gradient(145deg, #F4D9EE 0%, #FFF5E9 48%, #DCA6E9 100%);
 
-  color: var(--white);
+  color: var(--plum-brown);
 
   font-family:
     Inter,
@@ -90,10 +106,13 @@ canvas {
 
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
 
   image-rendering: auto;
 
   cursor: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 
   animation: canvasBreath 5s ease-in-out infinite;
 }
@@ -102,12 +121,18 @@ canvas[hidden] {
   display: none !important;
 }
 
+canvas:focus-visible {
+  outline: 4px solid var(--ruem-red);
+  outline-offset: -4px;
+}
+
 #gameFrame {
   position: fixed;
   inset: 0;
   z-index: 10;
   width: 100%;
-  height: 100%;
+  height: 100vh;
+  height: 100dvh;
   border: 0;
 }
 
@@ -127,27 +152,27 @@ body::before {
 body::before {
   background:
     linear-gradient(
-      rgba(56, 189, 248, .025) 1px,
+      rgba(56, 40, 63, .035) 1px,
       transparent 1px
     ),
     linear-gradient(
       90deg,
-      rgba(56, 189, 248, .025) 1px,
+      rgba(56, 40, 63, .035) 1px,
       transparent 1px
     ),
     radial-gradient(
       circle at 30% 35%,
-      rgba(168, 85, 247, .08),
+      rgba(220, 166, 233, .16),
       transparent 24%
     ),
     radial-gradient(
       circle at 70% 60%,
-      rgba(255, 79, 163, .07),
+      rgba(233, 78, 112, .10),
       transparent 24%
     ),
     radial-gradient(
       circle at 50% 10%,
-      rgba(255, 212, 59, .05),
+      rgba(255, 214, 110, .12),
       transparent 20%
     );
   background-size: 64px 64px, 64px 64px, auto, auto, auto;
@@ -193,7 +218,7 @@ body::before {
 .cursor-dot.is-hovering {
   width: 5px;
   height: 5px;
-  background: var(--pink-soft);
+  background: var(--bubblegum-purple);
   box-shadow:
     0 0 12px var(--pink),
     0 0 28px var(--purple);
@@ -202,7 +227,7 @@ body::before {
 
 .cursor-dot.is-clicking {
   transform: translate(-50%, -50%) scale(.55);
-  background: #fff;
+  background: var(--vanilla-cream);
   transition: transform .08s ease;
 }
 
@@ -211,7 +236,7 @@ body::before {
   position: fixed;
   width: 32px;
   height: 32px;
-  border: 1px solid rgba(255, 255, 255, .65);
+  border: 2px solid var(--plum-brown);
   border-radius: 50%;
   pointer-events: none;
   z-index: 9998;
@@ -219,8 +244,8 @@ body::before {
   transform: translate(-50%, -50%);
 
   box-shadow:
-    0 0 12px rgba(56, 189, 248, .45),
-    inset 0 0 12px rgba(168, 85, 247, .25);
+    0 0 12px rgba(220, 166, 233, .48),
+    inset 0 0 12px rgba(233, 78, 112, .18);
 
   transition:
     width .10s ease,
@@ -233,18 +258,18 @@ body::before {
 .cursor-ring:hover {
   width: 45px;
   height: 45px;
-  border-color: var(--pink);
+  border-color: var(--ruem-red);
 
   box-shadow:
-    0 0 18px rgba(255, 79, 163, .65),
-    0 0 35px rgba(168, 85, 247, .35);
+    0 0 18px rgba(233, 78, 112, .55),
+    0 0 35px rgba(220, 166, 233, .35);
 }
 
 .cursor-ring.is-clicking {
   width: 24px;
   height: 24px;
   border-width: 2px;
-  border-color: #fff;
+  border-color: var(--vanilla-cream);
   box-shadow:
     0 0 15px var(--yellow),
     0 0 32px var(--pink);
@@ -258,16 +283,16 @@ body::before {
   background:
     linear-gradient(
       145deg,
-      rgba(11, 11, 20, .94),
-      rgba(21, 13, 39, .90)
+      rgba(255, 245, 233, .96),
+      rgba(244, 217, 238, .94)
     );
 
-  border: 1px solid rgba(255, 255, 255, .12);
-  border-radius: 18px;
+  border: 2px solid var(--plum-brown);
+  border-radius: 22px;
 
   box-shadow:
-    0 18px 60px rgba(0, 0, 0, .45),
-    0 0 30px rgba(168, 85, 247, .12);
+    0 12px 30px rgba(56, 40, 63, .22),
+    0 0 24px rgba(220, 166, 233, .22);
 
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -284,7 +309,7 @@ body::before {
     linear-gradient(
       115deg,
       transparent 15%,
-      rgba(255, 255, 255, .08) 50%,
+      rgba(255, 245, 233, .56) 50%,
       transparent 85%
     );
 
@@ -301,16 +326,16 @@ body::before {
 
   padding: 12px 22px;
 
-  color: var(--white);
+  color: var(--plum-brown);
   background:
     linear-gradient(
       135deg,
-      rgba(168, 85, 247, .95),
-      rgba(37, 99, 235, .95)
+      var(--vanilla-cream),
+      var(--bubblegum-purple)
     );
 
-  border: 1px solid rgba(255, 255, 255, .20);
-  border-radius: 12px;
+  border: 2px solid var(--plum-brown);
+  border-radius: 999px;
 
   font: inherit;
   font-weight: 800;
@@ -319,13 +344,19 @@ body::before {
   cursor: pointer;
 
   box-shadow:
-    0 8px 25px rgba(37, 99, 235, .25),
-    0 0 18px rgba(168, 85, 247, .20);
+    0 5px 0 rgba(56, 40, 63, .2),
+    0 8px 20px rgba(56, 40, 63, .16);
 
   transition:
     transform .18s ease,
     box-shadow .18s ease,
     filter .18s ease;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--ruem-red);
+  outline-offset: 3px;
 }
 
 .arcade-button:hover {
@@ -334,9 +365,9 @@ body::before {
   filter: brightness(1.12);
 
   box-shadow:
-    0 12px 35px rgba(37, 99, 235, .35),
-    0 0 24px rgba(168, 85, 247, .40),
-    0 0 45px rgba(255, 79, 163, .18);
+    0 6px 0 rgba(56, 40, 63, .18),
+    0 12px 28px rgba(233, 78, 112, .26),
+    0 0 24px rgba(220, 166, 233, .32);
 }
 
 .arcade-button:active {
@@ -344,29 +375,32 @@ body::before {
 }
 
 .arcade-button.yellow {
-  background: linear-gradient(135deg, #ffd43b, #f59e0b);
-  color: #09090b;
+  background: linear-gradient(135deg, var(--vanilla-cream), var(--butter-yellow));
+  color: var(--plum-brown);
   box-shadow: var(--glow-yellow);
 }
 
 .arcade-button.green {
-  background: linear-gradient(135deg, #4ade80, #16a34a);
-  color: #03120a;
-  box-shadow: 0 0 20px rgba(74, 222, 128, .35);
+  background: linear-gradient(135deg, var(--vanilla-cream), var(--bubblegum-purple));
+  color: var(--plum-brown);
+  box-shadow: var(--glow-purple);
 }
 
 .arcade-button.pink {
-  background: linear-gradient(135deg, #ff4fa3, #ec4899);
+  background: linear-gradient(135deg, var(--bubblegum-purple), var(--ruem-red));
+  color: var(--vanilla-cream);
   box-shadow: var(--glow-pink);
 }
 
 .arcade-button.blue {
-  background: linear-gradient(135deg, #38bdf8, #2563eb);
+  background: linear-gradient(135deg, var(--vanilla-cream), var(--bubblegum-purple));
+  color: var(--plum-brown);
   box-shadow: var(--glow-blue);
 }
 
 .arcade-button.purple {
-  background: linear-gradient(135deg, #c084fc, #7e22ce);
+  background: linear-gradient(135deg, var(--bubblegum-purple), var(--cotton-candy));
+  color: var(--plum-brown);
   box-shadow: var(--glow-purple);
 }
 
@@ -385,8 +419,8 @@ body::before {
     rotateY(-2deg);
 
   box-shadow:
-    0 18px 50px rgba(0, 0, 0, .35),
-    0 0 28px rgba(168, 85, 247, .18);
+    0 12px 28px rgba(56, 40, 63, .2),
+    0 0 28px rgba(220, 166, 233, .22);
 }
 
 /* ---------- COLORFUL TEXT ---------- */
@@ -399,9 +433,9 @@ body::before {
       90deg,
       var(--yellow),
       var(--pink),
-      var(--purple),
-      var(--blue),
-      var(--green)
+      var(--bubblegum-purple),
+      var(--vanilla-cream),
+      var(--ruem-red)
     );
 
   background-size: 300% 100%;
@@ -422,14 +456,14 @@ body::before {
 .game-card {
   position: relative;
 
-  border: 1px solid rgba(255, 255, 255, .10);
-  border-radius: 16px;
+  border: 2px solid rgba(56, 40, 63, .72);
+  border-radius: 20px;
 
   background:
     linear-gradient(
       145deg,
-      rgba(255,255,255,.07),
-      rgba(255,255,255,.025)
+      rgba(255,245,233,.96),
+      rgba(244,217,238,.92)
     );
 
   overflow: hidden;
@@ -454,7 +488,7 @@ body::before {
     linear-gradient(
       90deg,
       transparent,
-      rgba(255,255,255,.12),
+      rgba(255,245,233,.6),
       transparent
     );
 
@@ -468,11 +502,11 @@ body::before {
 .game-card:hover {
   transform: translateY(-8px) scale(1.02);
 
-  border-color: rgba(255,255,255,.28);
+  border-color: var(--ruem-red);
 
   box-shadow:
-    0 15px 45px rgba(0,0,0,.4),
-    0 0 30px rgba(168,85,247,.18);
+    0 12px 30px rgba(56,40,63,.24),
+    0 0 24px rgba(220,166,233,.28);
 }
 
 .game-card:hover::after {
@@ -517,13 +551,13 @@ body::before {
 @keyframes petGlow {
   0%, 100% {
     filter:
-      drop-shadow(0 0 8px rgba(74,222,128,.35));
+      drop-shadow(0 0 8px rgba(220,166,233,.42));
   }
 
   50% {
     filter:
-      drop-shadow(0 0 22px rgba(56,189,248,.65))
-      drop-shadow(0 0 35px rgba(168,85,247,.25));
+      drop-shadow(0 0 22px rgba(233,78,112,.48))
+      drop-shadow(0 0 35px rgba(220,166,233,.3));
   }
 }
 
@@ -645,6 +679,7 @@ body::before {
   canvas {
     width: 100vw;
     height: 100vh;
+    height: 100dvh;
   }
 
   .arcade-panel {

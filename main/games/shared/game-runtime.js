@@ -1,3 +1,12 @@
+window.RUEM_THEME = Object.freeze({
+  plum: '#38283F',
+  cotton: '#F4D9EE',
+  bubblegum: '#DCA6E9',
+  red: '#E94E70',
+  butter: '#FFD66E',
+  vanilla: '#FFF5E9'
+});
+
 const W = 800, H = 500;
 const cv = document.getElementById('gameCanvas');
 const ctx = cv.getContext('2d');
@@ -33,7 +42,7 @@ function rr(x, y, w, h, r) {
   ctx.closePath();
 }
 
-function text(value, x, y, size = 18, color = '#fff', align = 'center') {
+function text(value, x, y, size = 18, color = window.RUEM_THEME.plum, align = 'center') {
   ctx.fillStyle = color;
   ctx.font = `${size}px sans-serif`;
   ctx.textAlign = align;
@@ -43,6 +52,63 @@ function text(value, x, y, size = 18, color = '#fff', align = 'center') {
 
 addEventListener('resize', resizeGameCanvas);
 resizeGameCanvas();
+
+const cursorDot = document.createElement('div');
+const cursorRing = document.createElement('div');
+cursorDot.className = 'cursor-dot';
+cursorRing.className = 'cursor-ring';
+cursorDot.hidden = true;
+cursorRing.hidden = true;
+document.body.append(cursorDot, cursorRing);
+
+let cursorRingX = innerWidth / 2;
+let cursorRingY = innerHeight / 2;
+let cursorTargetX = cursorRingX;
+let cursorTargetY = cursorRingY;
+
+function animateCursor() {
+  cursorRingX += (cursorTargetX - cursorRingX) * .38;
+  cursorRingY += (cursorTargetY - cursorRingY) * .38;
+  cursorRing.style.left = cursorRingX + 'px';
+  cursorRing.style.top = cursorRingY + 'px';
+  requestAnimationFrame(animateCursor);
+}
+animateCursor();
+
+document.addEventListener('pointermove', e => {
+  if (e.pointerType === 'touch') return;
+  cursorDot.hidden = false;
+  cursorRing.hidden = false;
+  cursorDot.style.left = e.clientX + 'px';
+  cursorDot.style.top = e.clientY + 'px';
+  cursorTargetX = e.clientX;
+  cursorTargetY = e.clientY;
+
+  const target = e.target instanceof Element ? e.target : null;
+  const hovering = target === cv || Boolean(target && target.closest('button'));
+  cursorDot.classList.toggle('is-hovering', hovering);
+  cursorRing.classList.toggle('is-hovering', hovering);
+});
+
+document.documentElement.addEventListener('pointerleave', () => {
+  cursorDot.hidden = true;
+  cursorRing.hidden = true;
+  cursorDot.classList.remove('is-hovering', 'is-clicking');
+  cursorRing.classList.remove('is-hovering', 'is-clicking');
+});
+
+addEventListener('pointerdown', () => {
+  cursorDot.classList.add('is-clicking');
+  cursorRing.classList.add('is-clicking');
+});
+addEventListener('pointerup', () => {
+  cursorDot.classList.remove('is-clicking');
+  cursorRing.classList.remove('is-clicking');
+});
+addEventListener('pointercancel', () => {
+  cursorDot.classList.remove('is-clicking');
+  cursorRing.classList.remove('is-clicking');
+});
 
 addEventListener('keydown', e => {
   const key = e.key.toLowerCase();
@@ -85,7 +151,7 @@ window.startArcadeGame = function (createGame) {
 
   let last = performance.now();
   function frame(now) {
-    const dt = Math.min(.05, (now - last) / 1000);
+    const dt = Math.max(0, Math.min(.05, (now - last) / 1000));
     last = now;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, cv.width, cv.height);
@@ -93,10 +159,16 @@ window.startArcadeGame = function (createGame) {
     if (!finished && activeGame.update) activeGame.update(dt);
     if (activeGame.draw) activeGame.draw();
     if (finished) {
-      ctx.fillStyle = 'rgba(5, 5, 15, .78)';
+      ctx.fillStyle = 'rgba(244, 217, 238, .84)';
       ctx.fillRect(0, 0, W, H);
-      text('Game Over', W / 2, H / 2 - 18, 38, '#fff');
-      text(`Final score: ${finalScore}  ·  Returning to arcade...`, W / 2, H / 2 + 28, 18, '#fbbf24');
+      rr(215, 190, 370, 110, 22);
+      ctx.fillStyle = window.RUEM_THEME.vanilla;
+      ctx.fill();
+      ctx.strokeStyle = window.RUEM_THEME.plum;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      text('Game Over', W / 2, H / 2 - 18, 38, window.RUEM_THEME.plum);
+      text(`Final score: ${finalScore}  ·  Returning to arcade...`, W / 2, H / 2 + 28, 18, window.RUEM_THEME.red);
     }
     requestAnimationFrame(frame);
   }

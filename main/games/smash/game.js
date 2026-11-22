@@ -1,4 +1,5 @@
 function badmintonGame(finish) {
+  const colors = window.RUEM_THEME;
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const randomBetween = (min, max) => min + Math.random() * (max - min);
   let playerX = 0, opponentX = 0;
@@ -141,30 +142,30 @@ function badmintonGame(finish) {
 
   function drawCourt() {
     const sky = ctx.createLinearGradient(0, 0, 0, 270);
-    sky.addColorStop(0, '#162c48');
-    sky.addColorStop(1, '#4d6374');
+    sky.addColorStop(0, colors.cotton);
+    sky.addColorStop(1, colors.vanilla);
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, W, H);
 
-    ctx.fillStyle = '#172535';
+    ctx.fillStyle = colors.plum;
     ctx.fillRect(0, 105, W, 82);
     for (let i = 0; i < 32; i++) {
       const x = i * 27 + 6;
       const height = 12 + (i % 4) * 5;
-      ctx.fillStyle = i % 2 ? '#263c50' : '#344858';
+      ctx.fillStyle = i % 2 ? colors.bubblegum : colors.cotton;
       ctx.fillRect(x, 184 - height, 17, height);
     }
     for (const x of [105, 250, 550, 695]) {
       const glow = ctx.createRadialGradient(x, 55, 2, x, 55, 70);
-      glow.addColorStop(0, 'rgba(255,255,220,.36)');
-      glow.addColorStop(1, 'rgba(255,255,220,0)');
+      glow.addColorStop(0, 'rgba(255,214,110,.48)');
+      glow.addColorStop(1, 'rgba(255,214,110,0)');
       ctx.fillStyle = glow;
       ctx.fillRect(x - 70, 0, 140, 140);
     }
 
     const floor = ctx.createLinearGradient(0, 160, 0, H);
-    floor.addColorStop(0, '#b58c63');
-    floor.addColorStop(1, '#533d34');
+    floor.addColorStop(0, colors.vanilla);
+    floor.addColorStop(1, colors.cotton);
     ctx.fillStyle = floor;
     ctx.beginPath();
     ctx.moveTo(courtX(-1, 0), courtY(0));
@@ -174,7 +175,7 @@ function badmintonGame(finish) {
     ctx.closePath();
     ctx.fill();
 
-    ctx.strokeStyle = 'rgba(255,255,255,.82)';
+    ctx.strokeStyle = colors.plum;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(courtX(-1, 0), courtY(0)); ctx.lineTo(courtX(-1, 1), H);
@@ -187,14 +188,14 @@ function badmintonGame(finish) {
     ctx.stroke();
 
     const netY = courtY(.43), netL = courtX(-1, .43), netR = courtX(1, .43);
-    ctx.strokeStyle = '#eef1e8';
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = colors.plum;
+    ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.moveTo(netL, netY - 38); ctx.lineTo(netL, netY + 5);
     ctx.moveTo(netR, netY - 38); ctx.lineTo(netR, netY + 5);
     ctx.moveTo(netL, netY - 34); ctx.lineTo(netR, netY - 34);
     ctx.stroke();
-    ctx.strokeStyle = 'rgba(20,30,38,.68)';
+    ctx.strokeStyle = 'rgba(56,40,63,.58)';
     ctx.lineWidth = 1;
     for (let i = 1; i < 15; i++) {
       const x = netL + (netR - netL) * i / 15;
@@ -207,9 +208,9 @@ function badmintonGame(finish) {
 
   function drawOpponent() {
     const x = 400 + opponentX * 62, y = 178;
-    ctx.fillStyle = 'rgba(0,0,0,.24)';
+    ctx.fillStyle = 'rgba(56,40,63,.2)';
     ctx.beginPath(); ctx.ellipse(x, y + 22, 23, 5, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#17212b';
+    ctx.strokeStyle = colors.plum;
     ctx.lineWidth = 5;
     ctx.lineCap = 'round';
     ctx.beginPath();
@@ -218,11 +219,12 @@ function badmintonGame(finish) {
     ctx.moveTo(x, y - 2); ctx.lineTo(x - 11, y + 9);
     ctx.moveTo(x, y - 2); ctx.lineTo(x + 11, y + 7);
     ctx.stroke();
-    ctx.fillStyle = '#263d57';
+    ctx.fillStyle = colors.bubblegum;
     rr(x - 11, y - 14, 22, 25, 7); ctx.fill();
-    ctx.fillStyle = '#d8a57e';
+    ctx.strokeStyle = colors.plum; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = colors.vanilla;
     ctx.beginPath(); ctx.arc(x, y - 21, 8, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#c9d4db';
+    ctx.strokeStyle = colors.plum;
     ctx.lineWidth = 2;
     ctx.beginPath(); ctx.ellipse(x + 18, y + 3, 9, 14, -.45, 0, Math.PI * 2); ctx.stroke();
     ctx.lineCap = 'butt';
@@ -236,14 +238,14 @@ function badmintonGame(finish) {
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(flight.direction === 'in' ? .65 : -.65);
-    ctx.fillStyle = '#f8f2d8';
+    ctx.fillStyle = colors.vanilla;
     ctx.beginPath();
     ctx.moveTo(0, -size * 1.8);
     ctx.lineTo(-size, size);
     ctx.lineTo(size, size);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = '#d9af66';
+    ctx.fillStyle = colors.butter;
     ctx.beginPath(); ctx.arc(0, size, size * .5, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
@@ -254,31 +256,32 @@ function badmintonGame(finish) {
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(-.58 + swing * 1.35);
-    ctx.strokeStyle = '#e9e1c8';
+    ctx.strokeStyle = colors.plum;
     ctx.lineWidth = 5;
     ctx.beginPath(); ctx.ellipse(0, -42, 23, 34, 0, 0, Math.PI * 2); ctx.stroke();
-    ctx.strokeStyle = 'rgba(240,244,235,.58)';
+    ctx.strokeStyle = 'rgba(255,245,233,.76)';
     ctx.lineWidth = 1;
     for (let i = -2; i <= 2; i++) {
       ctx.beginPath(); ctx.moveTo(i * 7, -70); ctx.lineTo(i * 7, -14); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(-20, -42 + i * 9); ctx.lineTo(20, -42 + i * 9); ctx.stroke();
     }
-    ctx.strokeStyle = '#ad7a4c';
+    ctx.strokeStyle = colors.red;
     ctx.lineWidth = 8;
     ctx.beginPath(); ctx.moveTo(0, -9); ctx.lineTo(16, 43); ctx.stroke();
-    ctx.fillStyle = '#d69a72';
+    ctx.fillStyle = colors.bubblegum;
     rr(6, 25, 24, 50, 10); ctx.fill();
+    ctx.strokeStyle = colors.plum; ctx.lineWidth = 2; ctx.stroke();
     ctx.restore();
   }
 
   function actionButton(x, label, key, active) {
     const width = 118, y = 445, height = 38;
-    ctx.fillStyle = active ? '#fbbf24' : 'rgba(15,27,42,.9)';
-    ctx.strokeStyle = active ? '#fff1b8' : 'rgba(255,255,255,.45)';
-    ctx.lineWidth = 1.5;
-    rr(x, y, width, height, 9); ctx.fill(); ctx.stroke();
-    text(label, x + width / 2, y + 14, 14, active ? '#21180b' : '#fff');
-    text(key, x + width / 2, y + 29, 10, active ? '#51380a' : '#bdc8d2');
+    ctx.fillStyle = active ? colors.butter : colors.vanilla;
+    ctx.strokeStyle = colors.plum;
+    ctx.lineWidth = 2;
+    rr(x, y, width, height, height / 2); ctx.fill(); ctx.stroke();
+    text(label, x + width / 2, y + 14, 14, colors.plum);
+    text(key, x + width / 2, y + 29, 10, colors.plum);
   }
 
   function draw() {
@@ -290,23 +293,25 @@ function badmintonGame(finish) {
       flight.progress >= .74 && flight.progress <= .99 &&
       Math.abs(playerX - flight.x) <= .58;
 
-    ctx.fillStyle = 'rgba(9,18,30,.72)';
-    rr(260, 12, 280, 46, 12); ctx.fill();
-    text(`YOU  ${playerPoints}     RIVAL  ${opponentPoints}`, 400, 35, 21, '#fff');
-    text(`${Math.ceil(timeLeft)}s`, 750, 30, 18, '#fff', 'right');
-    text('FIRST TO 7 POINTS', 400, 75, 12, 'rgba(255,255,255,.72)');
+    ctx.fillStyle = colors.vanilla;
+    rr(260, 12, 280, 46, 20); ctx.fill();
+    ctx.strokeStyle = colors.plum; ctx.lineWidth = 2; ctx.stroke();
+    text(`YOU  ${playerPoints}     RIVAL  ${opponentPoints}`, 400, 35, 21, colors.plum);
+    text(`${Math.ceil(timeLeft)}s`, 750, 30, 18, colors.plum, 'right');
+    text('FIRST TO 7 POINTS', 400, 75, 12, colors.plum);
 
     if (messageTime > 0) {
-      ctx.fillStyle = 'rgba(8,15,26,.76)';
-      rr(215, 365, 370, 34, 10); ctx.fill();
-      text(message, 400, 382, 15, '#fff');
+      ctx.fillStyle = colors.bubblegum;
+      rr(215, 365, 370, 34, 17); ctx.fill();
+      ctx.strokeStyle = colors.plum; ctx.lineWidth = 2; ctx.stroke();
+      text(message, 400, 382, 15, colors.plum);
     } else if (canHit) {
-      text('HIT NOW', 400, 345, 16, '#ffe08a');
+      text('HIT NOW', 400, 345, 16, colors.red);
     } else if (flight && flight.direction === 'in' && flight.progress >= .42) {
-      text('GET READY', 400, 345, 15, 'rgba(255,255,255,.82)');
+      text('GET READY', 400, 345, 15, colors.plum);
     }
 
-    text('← / → MOVE    SPACE HIT    S SMASH    F DROP', 400, 430, 13, 'rgba(255,255,255,.82)');
+    text('← / → MOVE    SPACE HIT    S SMASH    F DROP', 400, 430, 13, colors.plum);
     actionButton(215, 'HIT', 'SPACE', canHit);
     actionButton(341, 'SMASH', 'S', canHit);
     actionButton(467, 'DROP', 'F', canHit);

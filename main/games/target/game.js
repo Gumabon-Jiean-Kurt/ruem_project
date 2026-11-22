@@ -4,6 +4,7 @@
    ##  Click targets for 30 seconds. Misses cost points.
    ############################################################ */
 function targetGame(finish) {
+  const colors = window.RUEM_THEME;
   let time = 30, score = 0, over = false, tg;
   const make = () => {
     const r = Math.max(15, 40 - score / 20);
@@ -23,10 +24,14 @@ function targetGame(finish) {
       else score = Math.max(0, score - 5);
     },
     draw() {
-      ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(tg.x, tg.y, tg.r, 0, 7); ctx.fill();
-      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(tg.x, tg.y, tg.r * 0.55, 0, 7); ctx.fill();
-      ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(tg.x, tg.y, tg.r * 0.2, 0, 7); ctx.fill();
-      text('Score: ' + score + '   Time: ' + Math.max(0, time).toFixed(1), 400, 25, 20);
+      ctx.fillStyle = colors.red; ctx.beginPath(); ctx.arc(tg.x, tg.y, tg.r, 0, 7); ctx.fill();
+      ctx.strokeStyle = colors.plum; ctx.lineWidth = 3; ctx.stroke();
+      ctx.fillStyle = colors.vanilla; ctx.beginPath(); ctx.arc(tg.x, tg.y, tg.r * 0.55, 0, 7); ctx.fill();
+      ctx.strokeStyle = colors.plum; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = colors.bubblegum; ctx.beginPath(); ctx.arc(tg.x, tg.y, tg.r * 0.2, 0, 7); ctx.fill();
+      ctx.fillStyle = colors.vanilla; rr(250, 8, 300, 36, 18); ctx.fill();
+      ctx.strokeStyle = colors.plum; ctx.lineWidth = 2; ctx.stroke();
+      text('Score: ' + score + '   Time: ' + Math.max(0, time).toFixed(1), 400, 26, 20, colors.plum);
     }
   };
 }
