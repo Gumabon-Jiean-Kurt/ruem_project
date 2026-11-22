@@ -26,7 +26,7 @@ const ctx = cv.getContext('2d');
 const gameFrame = document.getElementById('gameFrame');
 let sc = 1, ox = 0, oy = 0, dpr = 1;
 const menuBackground = new Image();
-menuBackground.src = 'assets/arcade-menu.png';
+menuBackground.src = 'assets/ruem-arcade.gif';
 
 function resize() {
   dpr = window.devicePixelRatio || 1;
@@ -67,6 +67,8 @@ const HINTS = {
 
 
 // ---------- LOAD / SAVE FUNCTIONS ----------
+let petCatalogOpen = false;
+
 function loadSave() {
   try {
     const d = JSON.parse(localStorage.getItem(KEY));
@@ -74,7 +76,10 @@ function loadSave() {
   } catch (e) {}
   return { players: {}, p1: null, p2: null, mode: 'solo' };
 }
-function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function save() {
+  if (petCatalogOpen) return;
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
+}
 
 
 // ---------- PLAYER PROFILES ----------
@@ -303,15 +308,27 @@ function onFinish(who, score) {
 let scene;
 
 function launchEmbeddedGame(who) {
+  petCatalogOpen = false;
   activePlayer = who;
   cv.hidden = true;
   gameFrame.hidden = false;
   gameFrame.src = 'games/' + currentGame + '/index.html';
 }
 
+function launchPetCatalog() {
+  petCatalogOpen = true;
+  activePlayer = null;
+  cv.hidden = true;
+  gameFrame.hidden = false;
+  gameFrame.src = 'pet/index.html';
+}
+
 addEventListener('message', e => {
   if (e.source !== gameFrame.contentWindow || !e.data || typeof e.data !== 'object') return;
   if (e.data.type === 'arcade:quit') {
+    const wasPetCatalogOpen = petCatalogOpen;
+    petCatalogOpen = false;
+    if (wasPetCatalogOpen) Object.assign(S, loadSave());
     gameFrame.hidden = true;
     gameFrame.src = 'about:blank';
     cv.hidden = false;
@@ -353,9 +370,10 @@ function menuScene() {
         const y = 190 + row * 75;
         btn(x, y, 220, 58, g.name + '  (best ' + getPlayer(S.p1).scores[g.id] + ')', () => startGame(g.id), 16);
       });
-      btn(150, 350, 150, 34, 'Leaderboard', () => { scene = leaderboardScene(); }, 14);
-      btn(325, 350, 150, 34, 'Export save', exportSave, 14);
-      btn(500, 350, 150, 34, 'Import save', () => document.getElementById('importFile').click(), 14);
+      btn(40, 350, 160, 34, "Ruem's Closet", launchPetCatalog, 14);
+      btn(220, 350, 160, 34, 'Leaderboard', () => { scene = leaderboardScene(); }, 14);
+      btn(400, 350, 160, 34, 'Export save', exportSave, 14);
+      btn(580, 350, 160, 34, 'Import save', () => document.getElementById('importFile').click(), 14);
       text('Saves stay on this computer (browser localStorage).', 300, 397, 13, '#889');
     }
   };
@@ -463,6 +481,7 @@ document.getElementById('importFile').addEventListener('change', e => {
    ========================================================= */
 // ---------- PET STATE ----------
 let petT = 0, hop = 0, saveT = 0;
+let petModelImage = null, petModelSignature = '', petModelReady = false;
 const pet = () => getPlayer(S.p1).pet;
 
 
@@ -484,18 +503,43 @@ function tickPet(dt) {
 
 
 // ---------- PET: DRAW THE PET + FEED BUTTON ----------
+function updatePetModel(p) {
+  const equipped = p.wardrobe && p.wardrobe.equipped || {};
+  const expression = p.joy < 25 ? 'sad' : p.joy > 85 ? 'excited' : 'happy';
+  const signature = JSON.stringify(equipped) + ':' + expression;
+  if (signature === petModelSignature) return;
+  petModelSignature = signature;
+  const image = new Image();
+  image.onload = () => { petModelImage = image; petModelReady = true; };
+  image.onerror = () => {
+    petModelReady = false;
+    console.error('Could not render Ruem’s pet model.');
+  };
+  image.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(window.RuemPetModel.render(equipped, p.joy));
+}
+
 function drawPet() {
   const p = pet(), pl = getPlayer(S.p1), mood = (p.hunger + p.joy) / 2;
   const px = 680, py = 462 - Math.sin(petT * 3) * 3 - Math.sin(hop * Math.PI) * 18;
-  ctx.fillStyle = 'rgba(0,0,0,0.55)'; rr(640, 410, 160, 90, 10); ctx.fill();
+  updatePetModel(p);
+  ctx.save();
+  ctx.shadowColor = 'rgba(168,85,247,.4)'; ctx.shadowBlur = 14;
+  const panel = ctx.createLinearGradient(640, 410, 800, 500);
+  panel.addColorStop(0, 'rgba(37,24,76,.94)'); panel.addColorStop(1, 'rgba(10,12,35,.94)');
+  ctx.fillStyle = panel; rr(640, 410, 160, 90, 10); ctx.fill();
+  ctx.shadowBlur = 0; ctx.strokeStyle = 'rgba(192,132,252,.42)'; ctx.lineWidth = 1;
+  rr(640.5, 410.5, 159, 89, 10); ctx.stroke();
+  ctx.restore();
   hits.push({ x: 646, y: 428, w: 68, h: 68, fn: () => { p.joy = Math.min(100, p.joy + 8); hop = 1; } });  // click pet
-  ctx.fillStyle = `hsl(${mood * 1.2}, 70%, 60%)`;
-  ctx.beginPath(); ctx.ellipse(px, py, 28, 24, 0, 0, 7); ctx.fill();
-  ctx.fillStyle = '#000';
-  ctx.beginPath(); ctx.arc(px - 9, py - 5, 3.5, 0, 7); ctx.arc(px + 9, py - 5, 3.5, 0, 7); ctx.fill();
-  ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.beginPath();
-  const s = (mood - 50) / 50 * 8;   // happy = smile, sad = frown
-  ctx.moveTo(px - 8, py + 8); ctx.quadraticCurveTo(px, py + 8 + s, px + 8, py + 8); ctx.stroke();
+  if (petModelReady) ctx.drawImage(petModelImage, px - 35, py - 38, 70, 76);
+  else {
+    ctx.save();
+    ctx.font = '48px "Segoe UI Emoji", sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.shadowColor = `hsla(${mood * 1.2},70%,60%,.7)`; ctx.shadowBlur = 15;
+    ctx.fillText('🐶', px, py);
+    ctx.restore();
+  }
   text(p.name, 680, 420, 12, '#fff');
   bar(718, 424, p.hunger, '#f97316', 'Food'); bar(718, 442, p.joy, '#38bdf8', 'Joy');
   btn(718, 462, 74, 22, 'Feed 5c', () => {

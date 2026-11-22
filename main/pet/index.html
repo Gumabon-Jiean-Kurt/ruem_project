@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#11131b">
+  <title>Ruem's Closet</title>
+  <link rel="stylesheet" href="pet.css">
+  <script src="model.js" defer></script>
+  <script src="pet.js" defer></script>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Ruem's Closet home">
+        <span class="brand-icon" aria-hidden="true">✦</span>
+        <span><strong>RUEM</strong><small>PET STYLE STUDIO</small></span>
+      </a>
+      <div class="top-actions">
+        <span class="wallet"><span aria-hidden="true">🪙</span><strong id="coin-count">0</strong><span>coins</span></span>
+        <button class="close-button" id="close-button" type="button">← <span>Back to arcade</span></button>
+      </div>
+    </header>
+
+    <section class="intro">
+      <div>
+        <p class="eyebrow">THE LITTLE THINGS MAKE THE LOOK</p>
+        <h1>Ruem's <span>closet</span></h1>
+        <p class="intro-copy">A little style for your favorite pal. Browse the racks, pick a look, and make it yours.</p>
+      </div>
+      <div class="collection-note"><span class="sparkle">✦</span><span>Fresh looks<br><strong>for your best friend</strong></span></div>
+    </section>
+
+    <section class="studio">
+      <aside class="preview-panel">
+        <div class="panel-label"><span>YOUR MODEL</span><span class="live-dot">● READY</span></div>
+        <div class="pet-stage">
+          <div class="stage-orbit orbit-one"></div>
+          <div class="stage-orbit orbit-two"></div>
+          <div class="pet-spark spark-one">✦</div>
+          <div class="pet-spark spark-two">✧</div>
+          <div id="pet-model" class="pet-model-container"></div>
+        </div>
+        <div class="pet-caption">
+          <div><h2 id="pet-name">Ruem</h2><p>Your one-of-a-kind companion</p></div>
+          <span class="heart" aria-hidden="true">♥</span>
+        </div>
+        <div class="equipped-section">
+          <div class="equipped-heading"><span>CURRENT LOOK</span><span id="equipped-count">0 items</span></div>
+          <div id="equipped-list" class="equipped-list"></div>
+        </div>
+        <p class="closet-tip"><span aria-hidden="true">✦</span> Pick up a new piece and it will be added to your collection forever.</p>
+      </aside>
+
+      <section class="catalog-panel" aria-label="Pet clothing catalog">
+        <div class="catalog-heading">
+          <div><p class="eyebrow">THE COLLECTION</p><h2>Find their next favorite</h2></div>
+          <label class="search-box"><span aria-hidden="true">⌕</span><input id="search-input" type="search" placeholder="Search the closet" aria-label="Search catalog"></label>
+        </div>
+        <nav class="category-tabs" id="category-tabs" aria-label="Catalog categories"></nav>
+        <div class="results-bar"><span id="results-count">0 pieces</span><span>Coins are earned from arcade games</span></div>
+        <div class="item-grid" id="item-grid"></div>
+        <div id="empty-state" class="empty-state" hidden><span>✿</span><strong>No looks found</strong><p>Try a different search or category.</p></div>
+      </section>
+    </section>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </main>
+</body>
+</html>
