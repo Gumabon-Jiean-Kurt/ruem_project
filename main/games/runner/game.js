@@ -1,11 +1,4 @@
-//#region GAME 4 OF 4 - SWEET RUNNER
-/* ############################################################
-   ##  GAME 4 OF 4: SWEET RUNNER
-   ##  Endless 3-lane runner with candy hazards and power-ups.
-   ##  Controls: A/D or Left/Right = change lane
-   ##            W/Up/Space = jump,  S/Down = slide
-   ##            or click: sides = lane, top = jump, bottom = slide
-   ############################################################ */
+// Sweet Runner
 function runnerGame(finish) {
   const colors = {
     plum: window.RUEM_THEME.plum,
@@ -42,7 +35,7 @@ function runnerGame(finish) {
   } else {
     console.error('Ruem’s pet model is not available in Sweet Runner.');
   }
-  // ---------- SETTINGS (tweak these to change the feel) ----------
+  // Settings
   const LANE_W = 150;     // pixels between lane centres at the player
   const HY = 140;         // y of the horizon line
   const GY = 440;         // y of the ground at the player's feet
@@ -59,7 +52,7 @@ function runnerGame(finish) {
   };
 
 
-  // ---------- STATE ----------
+  // State
   // p.lx = smooth lane position, p.lane = target lane (-1, 0, 1), p.h = height off ground
   const p = { lx: 0, lane: 0, h: 0, vy: 0, slide: 0, queueSlide: false, run: 0 };
   const fx = { magnet: 0, shield: 0, x2: 0, speed: 0, jump: 0 }; // seconds left for each power-up
@@ -69,7 +62,7 @@ function runnerGame(finish) {
   const score = () => Math.floor(pts);
 
 
-  // ---------- SPAWNING: what appears on the track ----------
+  // Spawning
   const pick = a => a[Math.floor(Math.random() * a.length)];
 
   function coinLine(lane, wz) {
@@ -94,14 +87,14 @@ function runnerGame(finish) {
   }
 
 
-  // ---------- PLAYER ACTIONS ----------
+  // Player actions
   const jump  = () => { if (p.h === 0 && p.vy === 0) { p.vy = BASE_JUMP_V * (fx.jump > 0 ? 1.5 : 1); p.slide = 0; p.queueSlide = false; } };
   const slide = () => { if (p.h > 0) { p.vy = Math.min(p.vy, -900); p.queueSlide = true; } else p.slide = 0.6; };
   const left  = () => { p.lane = Math.max(-1, p.lane - 1); };
   const right = () => { p.lane = Math.min(1, p.lane + 1); };
 
 
-  // ---------- UPDATE: runs every frame ----------
+  // Update
   function update(dt) {
     if (over) return;
     t += dt;
@@ -145,7 +138,7 @@ function runnerGame(finish) {
   }
 
 
-  // ---------- DRAWING HELPERS (fake 3D) ----------
+  // Drawing helpers
   // proj(z): 1 at the player, shrinking toward 0 at the horizon. Everything scales by it.
   const proj = z => F / (F + z);
   const gy = f => HY + (GY - HY) * f;               // ground y at scale f
@@ -319,7 +312,7 @@ function runnerGame(finish) {
   }
 
 
-  // ---------- DRAW: runs every frame ----------
+  // Draw
   function draw() {
     drawWorld();
     const vis = ents.filter(e => !e.dead).map(e => ({ e, z: e.wz - dist })).sort((a, b) => b.z - a.z);
@@ -364,7 +357,7 @@ function runnerGame(finish) {
   }
 
 
-  // ---------- WHAT THE REST OF THE ARCADE CALLS ----------
+  // Arcade interface
   return {
     update, draw,
     key(k) {
@@ -392,7 +385,5 @@ function runnerGame(finish) {
   };
 }
 
-
-//#endregion
 
 startArcadeGame(runnerGame);

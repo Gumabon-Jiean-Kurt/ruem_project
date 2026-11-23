@@ -1,8 +1,7 @@
-//#region GAME 2 OF 4 - STAR CATCHER
-/* ############################################################
-   ##  GAME 2 OF 4: STAR CATCHER
-   ##  Catch falling stars, dodge bombs. 3 lives.
-   ############################################################ */
+// Game 2 of 4 - Star Catcher
+/*
+  Catch falling stars and dodge bombs.
+*/
 function catchGame(finish) {
   const colors = window.RUEM_THEME;
   let px = 400, items = [], lives = 3, score = 0, spawn = 0, over = false;
@@ -39,9 +38,7 @@ function catchGame(finish) {
       text('Score: ' + score + '   Lives: ' + '❤'.repeat(Math.max(0, lives)), 400, 26, 20, colors.plum);
       text('Drag to move', 400, 54, 13, colors.plum);
     }
-  };
+  }
 }
-
-//#endregion
 
 startArcadeGame(catchGame);

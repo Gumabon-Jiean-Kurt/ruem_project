@@ -1,25 +1,16 @@
-/* ============================================================
-   TABLE OF CONTENTS
-   PART 1  Canvas setup + resizing
-   PART 2  Save system (localStorage)
-   PART 3  Input (keyboard, mouse, buttons)
-   PART 4  Game pages (games/<game>/)
-   PART 5  Turn logic / local multiplayer
-   PART 6  Scenes (menu, ready, results, leaderboard, export/import)
-   PART 7  Digital pet
-   PART 8  Main loop
-   Tip: every PART and every GAME is a foldable region in VS Code.
-        Fold all: Ctrl+K Ctrl+0    Unfold all: Ctrl+K Ctrl+J
-   ============================================================ */
+/*
+  1. Canvas setup
+  2. Save system
+  3. Input
+  4. Game pages
+  5. Multiplayer
+  6. Scenes
+  7. Digital pet
+  8. Main loop
+*/
 
 
-//#region PART 1 - CANVAS SETUP + RESIZING
-/* =========================================================
-   PART 1 - CANVAS SETUP + RESIZING
-   The game is drawn in a fixed "logical" 800x500 space.
-   On every window resize we compute a scale + offset so the
-   logical space always fits the window (letterboxed).
-   ========================================================= */
+// Canvas setup
 const W = 800, H = 500;
 const PALETTE = Object.freeze({
   plum: '#38283F',
@@ -79,17 +70,10 @@ function resize() {
 addEventListener('resize', resize);
 resize();
 
-//#endregion
 
 
-//#region PART 2 - SAVE SYSTEM (local only)
-/* =========================================================
-   PART 2 - SAVE SYSTEM (local only)
-   Everything lives in the browser's localStorage on this
-   computer. Nothing is ever sent anywhere. Export/Import
-   buttons let you copy the save as a .json file.
-   ========================================================= */
-// ---------- SAVE KEY + GAME LIST ----------
+// Save system
+// Save system
 const KEY = 'miniArcadeSave_v1';
 const GAMES = [
   { id: 'catch',  name: 'Star Catcher' },
@@ -105,7 +89,7 @@ const HINTS = {
 };
 
 
-// ---------- LOAD / SAVE FUNCTIONS ----------
+// Load and save
 let petCatalogOpen = false;
 
 function loadSave() {
@@ -121,7 +105,7 @@ function save() {
 }
 
 
-// ---------- PLAYER PROFILES ----------
+// Player profiles
 function getPlayer(name) {
   if (!S.players[name]) {
     S.players[name] = {
@@ -136,24 +120,16 @@ function getPlayer(name) {
 }
 
 
-// ---------- CREATE THE SAVE OBJECT 'S' ----------
+// Create save object
 const S = loadSave();
 if (!S.p1) S.p1 = 'Player1';
 if (!S.p2) S.p2 = 'Player2';
 getPlayer(S.p1); save();
 
-//#endregion
 
 
-//#region PART 3 - INPUT
-/* =========================================================
-   PART 3 - INPUT
-   Keyboard state, mouse position in logical coordinates, and
-   an immediate-mode button system: every frame, scenes call
-   btn(...) which both draws a button and registers its
-   clickable area in `hits`.
-   ========================================================= */
-// ---------- KEYBOARD + MOUSE STATE ----------
+// Input
+// Input
 const keys = {};
 const mouse = { x: W / 2, y: H / 2, active: false };
 let hits = [];
@@ -182,7 +158,7 @@ function animateCursor() {
 animateCursor();
 
 
-// ---------- KEY PRESS LISTENERS ----------
+// Key listeners
 addEventListener('keydown', e => {
   keys[e.key.toLowerCase()] = true;
   if (['arrowup','arrowdown','arrowleft','arrowright',' '].includes(e.key.toLowerCase())) e.preventDefault();
@@ -191,7 +167,7 @@ addEventListener('keydown', e => {
 addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
 
 
-// ---------- MOUSE / CLICK LISTENERS ----------
+// Mouse listeners
 function toLogical(e) {
   const r = cv.getBoundingClientRect();
   return { x: ((e.clientX - r.left) * dpr - ox) / sc, y: ((e.clientY - r.top) * dpr - oy) / sc };
@@ -241,7 +217,7 @@ addEventListener('pointerup', () => {
 });
 
 
-// ---------- BUTTON HELPER (draws a button + registers its click area) ----------
+// Button helper
 function btn(x, y, w, h, label, fn, size = 16, variant = 'soft') {
   const key = `${x}:${y}:${w}:${h}:${label}`;
   hits.push({ x, y, w, h, fn, key });
@@ -287,7 +263,7 @@ function btn(x, y, w, h, label, fn, size = 16, variant = 'soft') {
   ctx.restore();
 }
 
-// ---------- DRAWING HELPERS (rounded rectangle, text) ----------
+// Drawing helpers
 function rr(x, y, w, h, r) {
   ctx.beginPath();
   ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
@@ -298,24 +274,17 @@ function text(str, x, y, size = 18, color = PALETTE.plum, align = 'center') {
   ctx.textAlign = align; ctx.textBaseline = 'middle'; ctx.fillText(str, x, y);
 }
 
-//#endregion
 
 
 
 
-//#region PART 5 - MULTIPLAYER (local hot-seat)
-/* =========================================================
-   PART 5 - MULTIPLAYER (local hot-seat)
-   "Versus" mode: Player 1 plays, then Player 2 plays on the
-   same computer, then scores are compared. Each profile has
-   its own best scores + coins saved in the local save file.
-   ========================================================= */
-// ---------- TURN / RESULT STATE ----------
+// Multiplayer
+// Multiplayer
 let turns = [], results = [], currentGame = null;
 let activePlayer = null;
 
 
-// ---------- START A GAME (solo or versus) ----------
+// Start game
 function startGame(id) {
   currentGame = id;
   turns = S.mode === 'versus' ? [S.p1, S.p2] : [S.p1];
@@ -327,7 +296,7 @@ function nextTurn() {
   scene = readyScene(who);
 }
 
-// ---------- GAME OVER: SAVE SCORE, THEN NEXT PLAYER OR RESULTS ----------
+// Game over
 function onFinish(who, score) {
   const pl = getPlayer(who);
   if (score > pl.scores[currentGame]) pl.scores[currentGame] = score;
@@ -343,15 +312,10 @@ function onFinish(who, score) {
   }, 900);
 }
 
-//#endregion
 
 
-//#region PART 6 - SCENES (menu, ready screen, playing, results,
-/* =========================================================
-   PART 6 - SCENES (menu, ready screen, playing, results,
-   leaderboard). `scene` is whichever one is active.
-   ========================================================= */
-// ---------- 'scene' = WHICHEVER SCREEN IS ACTIVE ----------
+// Scenes
+// Scenes
 let scene;
 
 function launchEmbeddedGame(who) {
@@ -393,10 +357,7 @@ addEventListener('message', e => {
 });
 
 
-/* ############################################################
-   ##  SCENE: MAIN MENU
-   ##  Player names, mode switch, game buttons, leaderboard, export/import.
-   ############################################################ */
+// Main menu
 function mobileMenuLayout() {
   const tapSize = mobileTapSize();
   const fontSize = Math.max(18, mobileUnits(16));
@@ -542,17 +503,14 @@ function menuScene() {
 }
 
 
-// ---------- HELPER: CHANGE A PLAYER NAME ----------
+// Change player name
 function setName(slot) {
   const n = (prompt('Enter a player name (new or existing):', S[slot]) || '').trim().slice(0, 12);
   if (n) { S[slot] = n; getPlayer(n); save(); }
 }
 
 
-/* ############################################################
-   ##  SCENE: READY SCREEN
-   ##  Shows the game name and hint, Start button begins the game.
-   ############################################################ */
+// Ready screen
 function readyScene(who) {
   return {
     update() {}, draw() {
@@ -585,10 +543,7 @@ function readyScene(who) {
 }
 
 
-/* ############################################################
-   ##  SCENE: RESULTS
-   ##  Shows scores (and the winner in versus mode).
-   ############################################################ */
+// Results
 function resultsScene() {
   return {
     update() {}, draw() {
@@ -622,10 +577,7 @@ function resultsScene() {
 }
 
 
-/* ############################################################
-   ##  SCENE: LEADERBOARD
-   ##  Best scores of every saved player.
-   ############################################################ */
+// Leaderboard
 function leaderboardScene() {
   return {
     update() {}, draw() {
@@ -656,10 +608,7 @@ function leaderboardScene() {
 }
 
 
-/* ############################################################
-   ##  EXPORT / IMPORT SAVE FILE
-   ##  Copy the save to a .json file, or load one back in.
-   ############################################################ */
+// Export and import
 function exportSave() {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' }));
@@ -678,31 +627,23 @@ document.getElementById('importFile').addEventListener('change', e => {
   rd.readAsText(f); e.target.value = '';
 });
 
-//#endregion
 
 
-//#region PART 7 - DIGITAL PET
-/* =========================================================
-   PART 7 - DIGITAL PET
-   Belongs to Player 1's profile. Hunger and joy slowly drop
-   in real time (and a little while the game was closed).
-   Click the pet to cheer it up, press Feed (5 coins) to feed.
-   Coins are earned from game scores.
-   ========================================================= */
-// ---------- PET STATE ----------
+// Digital pet
+// Digital pet
 let petT = 0, hop = 0, saveT = 0;
 let petModelImage = null, petModelSignature = '', petModelReady = false;
 const pet = () => getPlayer(S.p1).pet;
 
 
-// ---------- PET: CATCH UP ON TIME PASSED WHILE THE GAME WAS CLOSED ----------
+// Catch up
 (function offlineDecay() {            // apply time passed since last visit (max 1 hour)
   const p = pet(), el = Math.min((Date.now() - p.last) / 1000, 3600);
   p.hunger = Math.max(0, p.hunger - el * 0.05); p.joy = Math.max(0, p.joy - el * 0.03);
 })();
 
 
-// ---------- PET: DRAIN HUNGER AND JOY EVERY FRAME ----------
+// Drain stats
 function tickPet(dt) {
   const p = pet();
   p.hunger = Math.max(0, p.hunger - dt * 0.4);
@@ -712,7 +653,7 @@ function tickPet(dt) {
 }
 
 
-// ---------- PET: DRAW THE PET + FEED BUTTON ----------
+// Draw pet
 function updatePetModel(p) {
   const equipped = p.wardrobe && p.wardrobe.equipped || {};
   const expression = p.joy < 25 ? 'sad' : p.joy > 85 ? 'excited' : 'happy';
@@ -811,26 +752,21 @@ function drawMobilePet(p, pl, mood) {
   text('Coins: ' + pl.coins, x + 620, y + panelHeight - 12, fontSize - 4, PALETTE.plum);
 }
 
-// ---------- PET: STAT BAR HELPER ----------
+// Stat bar
 function bar(x, y, v, color, label) {
   ctx.fillStyle = PALETTE.bubblegum; ctx.fillRect(x, y, 74, 8);
   ctx.fillStyle = color; ctx.fillRect(x, y, 74 * v / 100, 8);
   text(label, x + 37, y + 14, 9, PALETTE.plum);
 }
 
-//#endregion
 
 
-//#region PART 8 - MAIN LOOP
-/* =========================================================
-   PART 8 - MAIN LOOP
-   Clear -> update -> draw scene -> draw pet on top.
-   ========================================================= */
-// ---------- START ON THE MENU, THEN RUN THE LOOP ----------
+// Main loop
+// Main loop
 scene = menuScene();
 let last = performance.now();
 
-// ---------- ONE FRAME: clear, update, draw, repeat ----------
+// One frame
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -843,4 +779,3 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
-//#endregion

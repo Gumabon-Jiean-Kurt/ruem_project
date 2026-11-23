@@ -1,8 +1,7 @@
-//#region GAME 3 OF 4 - TARGET RUSH
-/* ############################################################
-   ##  GAME 3 OF 4: TARGET RUSH
-   ##  Click targets for 30 seconds. Misses cost points.
-   ############################################################ */
+// Game 3 of 4 - Target Rush
+/*
+  Click targets for 30 seconds. Misses cost points.
+*/
 function targetGame(finish) {
   const colors = window.RUEM_THEME;
   let time = 30, score = 0, over = false, tg;
@@ -35,7 +34,5 @@ function targetGame(finish) {
     }
   };
 }
-
-//#endregion
 
 startArcadeGame(targetGame);
